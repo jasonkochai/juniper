@@ -1,0 +1,484 @@
+{
+  "gateway": {
+    "mode": "local",
+    "bind": "lan",
+    "port": 18789,
+    "auth": {
+      "mode": "token",
+      "token": "${OPENCLAW_GATEWAY_TOKEN}",
+      "rateLimit": {
+        "maxAttempts": 10,
+        "windowMs": 60000,
+        "lockoutMs": 300000
+      }
+    },
+    "controlUi": {
+      "allowedOrigins": [
+        "http://localhost:18789",
+        "http://127.0.0.1:18789",
+        "{{CONTROL_UI_ORIGIN}}"
+      ]
+    }
+  },
+  "session": {
+    "dmScope": "per-channel-peer"
+  },
+  "agents": {
+    "ownership": "explicit",
+    "defaults": {
+      "systemAgent": {
+        "agentId": "main"
+      },
+      "model": {
+        "primary": "anthropic/claude-haiku-5-5",
+        "fallbacks": [
+          "google/gemini-3.5-flash-lite"
+        ]
+      },
+      "models": {
+        "anthropic/claude-haiku-5-5": {
+          "alias": "haiku"
+        },
+        "anthropic/claude-sonnet-5-5": {
+          "alias": "sonnet"
+        },
+        "google/gemini-3.5-flash-lite": {
+          "alias": "gemini"
+        }
+      },
+      "modelPolicy": {
+        "allow": [
+          "anthropic/claude-haiku-5-5",
+          "anthropic/claude-sonnet-5-5",
+          "google/gemini-3.5-flash-lite"
+        ]
+      },
+      "params": {
+        "cacheRetention": "short"
+      },
+      "contextPruning": {
+        "mode": "cache-ttl",
+        "ttl": "1h"
+      },
+      "heartbeat": {
+        "every": "0m"
+      },
+      "mediaModels": {
+        "image": {
+          "primary": "google/gemini-3.1-flash-image",
+          "timeoutMs": 180000
+        }
+      }
+    },
+    "entries": {
+      "main": {
+        "workspace": "~/.openclaw/workspace",
+        "skills": [],
+        "tools": {
+          "alsoAllow": [
+            "read",
+            "write",
+            "edit"
+          ],
+          "deny": [
+            "apply_patch",
+            "icloud-cal__*",
+            "icloud-mail__*",
+            "composio-social__*"
+          ],
+          "agentToAgent": {
+            "send": [
+              "calendar"
+            ]
+          }
+        }
+      },
+      "calendar": {
+        "name": "calendar",
+        "workspace": "/home/node/.openclaw/workspace-calendar",
+        "agentDir": "/home/node/.openclaw/agents/calendar/agent",
+        "identity": {
+          "name": "Calendar",
+          "emoji": "📅"
+        },
+        "model": {
+          "primary": "anthropic/claude-haiku-5-5",
+          "fallbacks": [
+            "google/gemini-3.5-flash-lite"
+          ]
+        },
+        "skills": [],
+        "tools": {
+          "profile": "full",
+          "allow": [
+            "icloud-cal__*",
+            "read",
+            "write",
+            "edit"
+          ],
+          "deny": [
+            "exec",
+            "process",
+            "group:runtime",
+            "group:web",
+            "group:messaging",
+            "group:media",
+            "icloud-mail__*",
+            "composio-social__*"
+          ],
+          "agentToAgent": {
+            "send": []
+          }
+        }
+      },
+      "events": {
+        "name": "events",
+        "workspace": "/home/node/.openclaw/workspace-events",
+        "agentDir": "/home/node/.openclaw/agents/events/agent",
+        "identity": {
+          "name": "Events",
+          "emoji": "🎟️"
+        },
+        "model": {
+          "primary": "google/gemini-3.5-flash-lite",
+          "fallbacks": [
+            "anthropic/claude-haiku-5-5"
+          ]
+        },
+        "skills": [],
+        "tools": {
+          "profile": "full",
+          "allow": [
+            "web_fetch",
+            "read",
+            "write",
+            "edit",
+            "sessions_send"
+          ],
+          "deny": [
+            "exec",
+            "process",
+            "group:runtime",
+            "icloud-cal__*",
+            "icloud-mail__*",
+            "composio-social__*"
+          ],
+          "agentToAgent": {
+            "send": [
+              "calendar"
+            ]
+          }
+        }
+      },
+      "email": {
+        "name": "email",
+        "workspace": "/home/node/.openclaw/workspace-email",
+        "agentDir": "/home/node/.openclaw/agents/email/agent",
+        "identity": {
+          "name": "Email",
+          "emoji": "📧"
+        },
+        "model": {
+          "primary": "anthropic/claude-haiku-5-5",
+          "fallbacks": [
+            "google/gemini-3.5-flash-lite"
+          ]
+        },
+        "skills": [],
+        "tools": {
+          "profile": "full",
+          "allow": [
+            "icloud-mail__*",
+            "read",
+            "write",
+            "edit"
+          ],
+          "deny": [
+            "exec",
+            "process",
+            "group:runtime",
+            "group:web",
+            "group:messaging",
+            "group:media",
+            "icloud-cal__*",
+            "composio-social__*"
+          ],
+          "agentToAgent": {
+            "send": []
+          }
+        }
+      },
+      "comments": {
+        "name": "comments",
+        "workspace": "/home/node/.openclaw/workspace-comments",
+        "agentDir": "/home/node/.openclaw/agents/comments/agent",
+        "identity": {
+          "name": "Comments",
+          "emoji": "💬"
+        },
+        "model": {
+          "primary": "google/gemini-3.5-flash-lite",
+          "fallbacks": [
+            "anthropic/claude-haiku-5-5"
+          ]
+        },
+        "skills": [],
+        "tools": {
+          "profile": "full",
+          "allow": [
+            "composio-social__INSTAGRAM_GET_IG_MEDIA_COMMENTS",
+            "composio-social__INSTAGRAM_GET_IG_COMMENT_REPLIES",
+            "composio-social__YOUTUBE_LIST_COMMENT_THREADS",
+            "composio-social__YOUTUBE_LIST_COMMENTS",
+            "read",
+            "write",
+            "edit"
+          ],
+          "deny": [
+            "exec",
+            "process",
+            "group:runtime",
+            "icloud-cal__*",
+            "group:web",
+            "icloud-mail__*"
+          ],
+          "agentToAgent": {
+            "send": []
+          }
+        }
+      },
+      "news": {
+        "name": "news",
+        "workspace": "/home/node/.openclaw/workspace-news",
+        "agentDir": "/home/node/.openclaw/agents/news/agent",
+        "identity": {
+          "name": "News",
+          "emoji": "📰"
+        },
+        "model": {
+          "primary": "google/gemini-3.5-flash-lite",
+          "fallbacks": [
+            "anthropic/claude-haiku-5-5"
+          ]
+        },
+        "skills": [],
+        "tools": {
+          "profile": "full",
+          "allow": [
+            "web_fetch",
+            "web_search",
+            "read",
+            "write",
+            "edit"
+          ],
+          "deny": [
+            "exec",
+            "process",
+            "group:runtime",
+            "icloud-cal__*",
+            "icloud-mail__*",
+            "composio-social__*"
+          ],
+          "agentToAgent": {
+            "send": []
+          }
+        }
+      }
+    }
+  },
+  "tools": {
+    "profile": "messaging",
+    "codeMode": false,
+    "deny": [
+      "exec",
+      "group:runtime",
+      "group:automation",
+      "group:ui"
+    ],
+    "fs": {
+      "workspaceOnly": true
+    },
+    "exec": {
+      "mode": "deny"
+    },
+    "elevated": {
+      "enabled": false
+    },
+    "sessions": {
+      "visibility": "agent"
+    },
+    "agentToAgent": {
+      "enabled": true,
+      "allow": [
+        "main",
+        "calendar",
+        "events"
+      ]
+    },
+    "web": {
+      "search": {
+        "enabled": true,
+        "provider": "brave",
+        "maxResults": 8
+      },
+      "fetch": {
+        "enabled": true,
+        "maxChars": 10000
+      }
+    },
+    "media": {
+      "audio": {
+        "enabled": true
+      },
+      "models": [
+        {
+          "provider": "google",
+          "model": "gemini-3.5-flash-lite",
+          "capabilities": [
+            "audio"
+          ]
+        }
+      ]
+    }
+  },
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "botToken": "${TELEGRAM_BOT_TOKEN}",
+      "dmPolicy": "allowlist",
+      "allowFrom": [
+        "${TELEGRAM_OWNER_ID}"
+      ],
+      "groupPolicy": "allowlist",
+      "groups": {
+        "{{TELEGRAM_GROUP_ID}}": {
+          "requireMention": false,
+          "topics": {
+            "1": {
+              "agentId": "main"
+            },
+            "{{CAL_TOPIC_ID}}": {
+              "agentId": "calendar"
+            },
+            "{{EVENTS_TOPIC_ID}}": {
+              "agentId": "events"
+            },
+            "{{EMAIL_TOPIC_ID}}": {
+              "agentId": "email"
+            },
+            "{{NEWS_TOPIC_ID}}": {
+              "agentId": "news"
+            },
+            "{{COMMENTS_TOPIC_ID}}": {
+              "agentId": "comments"
+            }
+          }
+        }
+      },
+      "groupAllowFrom": [
+        "${TELEGRAM_OWNER_ID}"
+      ]
+    }
+  },
+  "commands": {
+    "ownerAllowFrom": [
+      "telegram:${TELEGRAM_OWNER_ID}"
+    ]
+  },
+  "bindings": [
+    {
+      "agentId": "main",
+      "match": {
+        "channel": "telegram",
+        "accountId": "default"
+      }
+    }
+  ],
+  "mcp": {
+    "servers": {
+      "icloud-cal": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "caldav-mcp@0.10.0"
+        ],
+        "env": {
+          "CALDAV_BASE_URL": "https://caldav.icloud.com",
+          "CALDAV_USERNAME": "${ICLOUD_USER}",
+          "CALDAV_PASSWORD": "${ICLOUD_CAL_APP_PASSWORD}"
+        },
+        "requestTimeoutMs": 20000,
+        "toolFilter": {
+          "include": [
+            "list-calendars",
+            "list-events",
+            "create-event",
+            "update-event"
+          ]
+        }
+      },
+      "icloud-mail": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "imap-mcp-server@2.2.0"
+        ],
+        "env": {
+          "IMAP_MCP_READ_ONLY": "true",
+          "IMAP_MCP_ENABLED_TOOLS": "imap_search_emails,imap_get_email,imap_get_latest_emails",
+          "IMAP_MCP_ACCOUNT_ICLOUD_IMAP_PASSWORD": "${ICLOUD_MAIL_APP_PASSWORD}"
+        },
+        "requestTimeoutMs": 30000,
+        "toolFilter": {
+          "include": [
+            "imap_search_emails",
+            "imap_get_email",
+            "imap_get_latest_emails"
+          ]
+        }
+      },
+      "composio-social": {
+        "url": "https://backend.composio.dev/v3/mcp/{{COMPOSIO_SERVER_ID}}?user_id={{COMPOSIO_USER_ID}}",
+        "transport": "streamable-http",
+        "headers": {
+          "x-api-key": "${COMPOSIO_API_KEY}"
+        },
+        "requestTimeoutMs": 30000,
+        "toolFilter": {
+          "include": [
+            "INSTAGRAM_GET_IG_MEDIA_COMMENTS",
+            "INSTAGRAM_GET_IG_COMMENT_REPLIES",
+            "YOUTUBE_LIST_COMMENT_THREADS",
+            "YOUTUBE_LIST_COMMENTS"
+          ]
+        }
+      }
+    }
+  },
+  "plugins": {
+    "entries": {
+      "google": {
+        "enabled": true
+      },
+      "anthropic": {
+        "enabled": true
+      }
+    }
+  },
+  "skills": {
+    "entries": {
+      "1password": {
+        "enabled": false
+      },
+      "github": {
+        "enabled": false
+      },
+      "obsidian": {
+        "enabled": false
+      },
+      "summarize": {
+        "enabled": false
+      }
+    }
+  }
+}
