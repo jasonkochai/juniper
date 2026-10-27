@@ -10,7 +10,7 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=/dev/null
 . "$HERE/host.env"
 OC_DIR="${OC_DIR:-$JUNIPER_DIR}"
-AGENTS="calendar events email news comments"
+AGENTS="calendar events email news"
 SUDO="sudo "
 [ "$HOST_TYPE" = "local" ] && SUDO=""
 
@@ -20,11 +20,20 @@ dc() { docker compose -p openclaw-agents "$@"; }
 oc() { docker exec openclaw-gateway node dist/index.js "$@"; }
 # a local install runs as you; Docker Desktop maps file ownership itself
 own() { [ "$HOST_TYPE" = "local" ] || chown "$@"; }
+# hide anything token-shaped before it reaches a terminal or the report
+redact() {
+    sed -E -e 's/([Aa]uthorization"?: *"?(Basic|Bearer|basic|bearer) )[^ "]+/\1[redacted]/g' \
+        -e 's/bot[0-9]{6,}:[A-Za-z0-9_-]{30,}/bot[redacted]/g' \
+        -e 's/(sk-ant-|AIza)[A-Za-z0-9_-]{10,}/\1[redacted]/g' \
+        -e 's/[0-9a-f]{64}/[redacted]/g'
+}
+
+pretty() { python3 -m json.tool --no-ensure-ascii "$1" 2> /dev/null || python3 -m json.tool "$1"; }
 
 wait_live() {
     local i
     for i in $(seq 1 24); do
-        if curl -m 5 -s http://127.0.0.1:18789/healthz | grep -q '"status":"live"'; then
+        if curl -m 5 -s http://127.0.0.1:18789/healthz | grep '"status":"live"' > /dev/null; then
             echo "healthz: live"
             return 0
         fi
@@ -35,7 +44,7 @@ wait_live() {
 
 config_errors() {
     docker logs --tail 60 openclaw-gateway 2>&1 \
-        | grep -iE "blocked|invalid|unknown key|error" || echo "no config errors in the log"
+        | grep -iE "blocked|invalid|unknown key|error|failed to start" | redact || echo "no config errors in the log"
 }
 
 cmd_backup() {
@@ -44,7 +53,7 @@ cmd_backup() {
     local parent name out
     parent="$(dirname "$OC_DIR")"
     name="$(basename "$OC_DIR")"
-    out="$parent/$name-backup-$(date +%F).tgz"
+    out="$parent/$name-backup-$(stamp).tgz"
     tar czf "$out" -C "$parent" "$name"
     chmod 600 "$out"
     ls -l "$out"
@@ -63,6 +72,13 @@ cmd_layout() {
     own 1000:1000 $dirs
     chmod 700 config auth-secrets imap-mcp
     chmod 750 workspace workspace-*
+    # compose mounts the rule files read-only, so they must exist as files before the first start
+    local d f
+    for d in workspace $(printf 'workspace-%s ' $AGENTS); do
+        for f in AGENTS.md SOUL.md USER.md; do
+            [ -e "$d/$f" ] || : > "$d/$f"
+        done
+    done
     ls -ln
 }
 
@@ -72,8 +88,11 @@ cmd_env() {
     if [ -e .env ]; then
         echo ".env already exists, left as it is"
     else
+        local token
+        token="$(openssl rand -hex 32)"
+        [ "${#token}" -eq 64 ] || die "openssl rand failed"
         (umask 077 && cp "$HERE/env.example" .env)
-        sed -i.tmp "s/^OPENCLAW_GATEWAY_TOKEN=.*/OPENCLAW_GATEWAY_TOKEN=$(openssl rand -hex 32)/" .env
+        sed -i.tmp "s/^OPENCLAW_GATEWAY_TOKEN=.*/OPENCLAW_GATEWAY_TOKEN=$token/" .env
         rm -f .env.tmp
         chmod 600 .env
         echo "created .env with a fresh gateway token"
@@ -89,7 +108,8 @@ cmd_compose() {
         cp -p docker-compose.yaml "docker-compose.yaml.bak-$(stamp)"
     fi
     cp "$HERE/docker-compose.yaml" docker-compose.yaml
-    dc config --quiet && echo "compose file valid"
+    dc config --quiet || die "docker-compose.yaml is invalid (see above)"
+    echo "compose file valid"
     if [ ! -e config/openclaw.json ]; then
         echo "no config/openclaw.json yet: run 'host.sh config 1' to start the gateway"
         return
@@ -112,11 +132,15 @@ cmd_expose() {
         ugos)
             echo "nothing to do: UGOS runs Tailscale in userspace mode and forwards tailnet connections to 127.0.0.1" ;;
         local)
-            echo "nothing to do: a local install is only reachable on this computer (http://localhost:18789)" ;;
+            if [ "$what" = "syncthing" ]; then
+                echo "nothing to do: a local install mounts the vault folder directly, no Syncthing"
+            else
+                echo "nothing to do: a local install is only reachable on this computer (http://localhost:18789)"
+            fi ;;
         linux)
             command -v tailscale > /dev/null || die "install Tailscale first: https://tailscale.com/download/linux"
             for p in $ports; do
-                tailscale serve --bg --tcp="$p" "tcp://localhost:$p"
+                tailscale serve --bg --tcp="$p" "tcp://127.0.0.1:$p"
             done
             tailscale serve status ;;
     esac
@@ -125,6 +149,7 @@ cmd_expose() {
 cmd_config() {
     # step 1.6 workflow: stop, back up, merge, check, start, check again
     local phase="${1:-}" mode="${2:-}"
+    [ -n "$phase" ] || die "usage: host.sh config <1-4> [--dry-run]"
     local tpl="$HERE/config/openclaw.phase$phase.json"
     [ -f "$tpl" ] || die "no $tpl (render it first; it is skipped while values are missing)"
     python3 -m json.tool "$tpl" > /dev/null || die "template is not valid JSON"
@@ -134,7 +159,7 @@ cmd_config() {
     python3 "$HERE/merge_config.py" "$live" "$tpl" > "$tmp"
     python3 -m json.tool "$tmp" > /dev/null || die "merged config is not valid JSON"
     if [ "$mode" = "--dry-run" ]; then
-        diff <(python3 -m json.tool "$live" 2> /dev/null || true) <(python3 -m json.tool "$tmp") || true
+        diff <(pretty "$live" 2> /dev/null || true) <(pretty "$tmp") || true
         rm -f "$tmp"
         return
     fi
@@ -154,6 +179,10 @@ cmd_config() {
         [ -n "$bak" ] && echo "restore with: ${SUDO}cp $OC_DIR/$bak $OC_DIR/$live"
         die "gateway not live after the config change"
     fi
+    if grep -q '"mcp"' "$live"; then
+        echo "waiting 45s for the MCP servers to start..."
+        sleep 45
+    fi
     config_errors
     if grep -q '"icloud-cal"' "$live"; then
         grep -q 'CALDAV_PASSWORD": "${ICLOUD_CAL_APP_PASSWORD}"' "$live" \
@@ -168,38 +197,47 @@ cmd_config() {
 }
 
 model_for() {
+    # JUNIPER_AGENT_MODEL overrides the cloud defaults, e.g. ollama/<model> (docs/local-llm.md)
     case "$1" in
-        calendar|email) echo "anthropic/claude-haiku-5-5" ;;
-        events|news|comments) echo "google/gemini-3.5-flash-lite" ;;
+        calendar|email) echo "${JUNIPER_AGENT_MODEL:-anthropic/claude-haiku-5-5}" ;;
+        events|news) echo "${JUNIPER_AGENT_MODEL:-google/gemini-3.5-flash-lite}" ;;
         *) die "unknown agent: $1 (one of: $AGENTS)" ;;
     esac
 }
 
+install_rules() {
+    # AGENTS.md, SOUL.md, USER.md: written in place, because compose mounts each one read-only
+    # and a replaced file (new inode) would vanish from the running container
+    local dir="$1" agent_src="$2" f s
+    for f in AGENTS.md SOUL.md USER.md; do
+        s="$HERE/workspaces/shared/$f"
+        [ -f "$agent_src/$f" ] && s="$agent_src/$f"
+        chmod u+w "$dir/$f" 2> /dev/null || true
+        cat "$s" > "$dir/$f"
+        if [ "$HOST_TYPE" = "local" ]; then
+            chmod 444 "$dir/$f"
+        else
+            chown root:root "$dir/$f"
+            chmod 644 "$dir/$f"
+        fi
+    done
+}
+
 cmd_workspace() {
     # steps 1.10 and 2.3: instruction files from the bundle, never edited through chat
-    local id="${1:-}" src="$HERE/workspaces" f
+    local id="${1:-}" src="$HERE/workspaces" dir
     [ -n "$id" ] || die "usage: host.sh workspace <main|agent>"
     [ -f "$src/$id/AGENTS.md" ] || die "no rendered $src/$id/AGENTS.md (missing values?)"
     cd "$OC_DIR"
     if [ "$id" = "main" ]; then
-        rm -f workspace/AGENTS.md workspace/SOUL.md workspace/USER.md   # may be read-only
-        cp "$src/main/AGENTS.md" "$src/shared/SOUL.md" "$src/shared/USER.md" workspace/
-        for f in AGENTS.md SOUL.md USER.md; do
-            if [ "$HOST_TYPE" = "local" ]; then
-                chmod 444 "workspace/$f"     # read-only for the container
-            else
-                chown root:root "workspace/$f"
-                chmod 644 "workspace/$f"
-            fi
-        done
-        ls -l workspace/*.md
-        return
+        dir="workspace"
+    else
+        dir="workspace-$id"
+        rm -f "$dir/BOOTSTRAP.md" "$dir/IDENTITY.md"
+        cp "$src/$id/IDENTITY.md" "$dir/"
+        own -R 1000:1000 "$dir"
     fi
-    local dir="workspace-$id"
-    rm -f "$dir/BOOTSTRAP.md"
-    cp "$src/$id/AGENTS.md" "$src/$id/IDENTITY.md" "$src/shared/SOUL.md" "$src/shared/USER.md" "$dir/"
-    chmod 644 "$dir/AGENTS.md" "$dir/IDENTITY.md" "$dir/SOUL.md" "$dir/USER.md"
-    own -R 1000:1000 "$dir"
+    install_rules "$dir" "$src/$id"
     ls -ln "$dir"
 }
 
@@ -225,7 +263,7 @@ cmd_cron() {
 cmd_ids() {
     # step 1.9: user, group and topic IDs from recent bot updates; the token is never printed
     local token script
-    token="$(grep '^TELEGRAM_BOT_TOKEN=' "$OC_DIR/.env" | cut -d= -f2-)"
+    token="$(grep '^TELEGRAM_BOT_TOKEN=' "$OC_DIR/.env" | cut -d= -f2- | tr -d "\"' \r" || true)"
     [ -n "$token" ] || die "TELEGRAM_BOT_TOKEN is empty in .env"
     read -r -d '' script <<'PY' || true
 import json, sys
@@ -275,7 +313,7 @@ cmd_check() {
         echo "== audit";    oc security audit --deep
         echo "== log (last hour, errors and code mode)"
         docker logs --since 1h openclaw-gateway 2>&1 | grep -iE "error|blocked|invalid|code-mode" | tail -30
-    } 2>&1 | sed -E 's/([Aa]uthorization: *(Basic|Bearer|basic|bearer) )[^ ]+/\1[redacted]/g' > "$report"
+    } 2>&1 | redact > "$report"
     own "$owner" "$report"
     chmod 600 "$report"
     echo "report written to $report"
@@ -289,7 +327,7 @@ usage: ${SUDO}bash host.sh <command>      (host type: $HOST_TYPE, data: $OC_DIR)
   env                    create .env with a gateway token, list unfilled keys (1.3)
   compose                install docker-compose.yaml, start if configured (1.4)
   expose [syncthing]     make the gateway (or Syncthing) reachable over Tailscale (1.5)
-  config <1-5> [--dry-run]  merge openclaw.phaseN.json into the live config (1.6 workflow)
+  config <1-4> [--dry-run]  merge openclaw.phaseN.json into the live config (1.6 workflow)
   workspace <main|agent> install AGENTS.md, IDENTITY.md, SOUL.md, USER.md
   agent <id>             openclaw agents add + workspace files ($AGENTS)
   cron <agent>           add that agent's scheduled jobs

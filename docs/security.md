@@ -2,7 +2,7 @@
 
 ## Panic button
 
-1. **Stop everything.** From your phone: the UGOS app (*Docker → openclaw-gateway → Stop*) on a UGREEN NAS, or SSH over Tailscale anywhere else (any SSH app). On a local install, quit Docker Desktop. Over SSH:
+1. **Stop everything.** From your phone: the UGOS app (*Docker → openclaw-gateway → Stop*) on a UGREEN home server, or SSH over Tailscale anywhere else (any SSH app). On a local install, quit Docker Desktop. Over SSH:
 
    ```
    sudo docker stop openclaw-gateway
@@ -11,21 +11,20 @@
    `/stop` in Telegram only aborts the current run. It does not stop the agents.
 2. **Cut Telegram.** In BotFather, `/mybots` → your bot → *API Token* → *Revoke current token* (or `/revoke`). This takes effect immediately.
 3. **Revoke Apple access.** At [account.apple.com](https://account.apple.com) → *Sign-In and Security* → *App-Specific Passwords*, remove `openclaw-mail` and `openclaw-cal`, or use *Revoke All*. If you use a second Apple ID for the calendar, also stop sharing your calendars with it in the Calendar app. Changing your main Apple Account password also revokes every app-specific password.
-4. **Cut Composio (Phase 5).** In the Composio dashboard, delete the connected accounts and rotate the project API key. Also revoke the apps at the source: Instagram → Settings → *Apps and websites*, and [Google account permissions](https://myaccount.google.com/permissions) for YouTube.
-5. **Stop note sync.** Run `sudo docker stop syncthing` (on a local install, remove `OBSIDIAN_ASSISTANT_DIR` from `.env` and run `host.sh compose`). On the Mac, pause the `Assistant` folder in Syncthing. Look at `Assistant/_log.md` for what the agent changed, and use Syncthing's file versions to roll back.
-6. **Disable the model keys.**
+4. **Stop note sync.** Run `sudo docker stop syncthing` (on a local install, remove `OBSIDIAN_ASSISTANT_DIR` from `.env` and run `host.sh compose`). On the Mac, pause the `Assistant` folder in Syncthing. Look at `Assistant/_log.md` for what the agent changed, and use Syncthing's file versions to roll back.
+5. **Disable the model keys.**
    * [Anthropic Console → API keys](https://platform.claude.com/settings/keys) → disable
    * [AI Studio → API keys](https://aistudio.google.com/apikey) → delete
    * Brave dashboard → revoke
    * X / xAI, if added.
-7. **Rotate the gateway token.**
+6. **Rotate the gateway token.**
 
    ```
-   cd "$JUNIPER_DIR"
-   sed -i "s/^OPENCLAW_GATEWAY_TOKEN=.*/OPENCLAW_GATEWAY_TOKEN=$(openssl rand -hex 32)/" .env
+   . ~/juniper/host.env && cd "$JUNIPER_DIR"      # local: . build/host/host.env; drop sudo below
+   sudo sed -i.bak "s/^OPENCLAW_GATEWAY_TOKEN=.*/OPENCLAW_GATEWAY_TOKEN=$(openssl rand -hex 32)/" .env && sudo rm -f .env.bak
    sudo docker compose -p openclaw-agents up -d openclaw-gateway   # not "restart": restart doesn't re-read .env
    ```
-8. **Before restarting,** set `dmPolicy: "disabled"` and `groupPolicy: "disabled"`, then look at what happened:
+7. **Before restarting,** set `dmPolicy: "disabled"` and `groupPolicy: "disabled"`, then look at what happened:
 
    ```
    sudo docker compose -p openclaw-agents up -d openclaw-gateway
@@ -35,7 +34,7 @@
    openclaw mcp list           # unexpected MCP servers?
    openclaw skills list        # unexpected skills?
    ```
-9. Put the new keys and new app-specific passwords in `.env`, re-enable the channels, and start the gateway again. [Incident response docs](https://docs.openclaw.ai/gateway/security/operator-incident-response)
+8. Put the new keys and new app-specific passwords in `.env`, re-enable the channels, and start the gateway again. [Incident response docs](https://docs.openclaw.ai/gateway/security/operator-incident-response)
 
 ## Security checklist
 
@@ -50,17 +49,16 @@
 * Exec is denied for **every** agent: `tools.deny` includes `exec` and `group:runtime`, and `tools.exec.mode: "deny"`. **`tools.codeMode: false`**, because Code Mode's own exec bypasses those denies. No agent lists `exec`/`wait`, and the hostname test is refused. Never `/exec security=full` or `mode: "full"`.
 * `tools.elevated.enabled: false`
 * No ClawHub skills are installed. The only integrations are two **version-pinned** MCP servers (`caldav-mcp@0.10.0`, `imap-mcp-server@2.2.0`). Any new skill or server goes through the vetting list below.
-* Every `AGENTS.md` says "never install skills", and the instruction files are root-owned and read-only.
+* Every `AGENTS.md` says "never install skills". Every agent's `AGENTS.md`, `SOUL.md` and `USER.md` are root-owned (`chmod 444` on a local install) and mounted read-only into the container, so the agents' file tools can't edit, delete or replace them.
 * Separate app-specific passwords `openclaw-mail` and `openclaw-cal`, kept only in `.env`. Your main Apple Account password is never used anywhere on the host.
 * The mail server has `IMAP_MCP_READ_ONLY=true`, `toolFilter` passes only the 3 read tools, and no SMTP account is configured. Tested: delete and send requests fail.
 * The calendar server has no `delete-event` tool, new events go to the *Agent* calendar only, and every create or change needs your "yes". Or: a second Apple ID makes your other calendars read-only, enforced by Apple.
-* Composio (Phase 5): its own project, your own Meta and Google OAuth apps, trimmed scopes (no upload, publish or DM scopes), `allowed_tools` limited to read tools, the API key only in `.env`, and `composio-social__*` denied for every agent except `comments`.
 * Only the vault's `Assistant/` folder is on the host and mounted into the gateway. The hub has no delete path (exec and `apply_patch` denied), logs every change in `_log.md`, and the sync ports are published on `127.0.0.1` only.
 * Agent-to-agent: `allow` is exactly main, calendar and events. Send lists: main → calendar, events → calendar, all others `[]`.
 * Spend caps: Anthropic $10, Google $8 with a billing spend cap, Brave limited to the free credit.
 * `config/`, `auth-secrets/` and `imap-mcp/` are mode 700, and `.env` and the audit files are mode 600.
 * Backups of `$JUNIPER_DIR` are encrypted and treated as credentials, because tokens are stored in plaintext SQLite.
-* On a UGREEN NAS, SSH is turned off again in UGOS when you're not configuring.
+* On a UGREEN home server, SSH is turned off again in UGOS when you're not configuring.
 * `openclaw security audit --deep` is clean after the latest phase.
 * Tested: nothing is sent, posted, registered or deleted without your explicit "yes".
 

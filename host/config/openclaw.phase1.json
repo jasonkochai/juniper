@@ -58,7 +58,7 @@
       },
       "contextPruning": {
         "mode": "cache-ttl",
-        "ttl": "1h"
+        "ttl": "5m"
       },
       "heartbeat": {
         "every": "0m"
@@ -122,9 +122,6 @@
               "requireMention": true
             },
             "{{NEWS_TOPIC_ID}}": {
-              "requireMention": true
-            },
-            "{{COMMENTS_TOPIC_ID}}": {
               "requireMention": true
             }
           }

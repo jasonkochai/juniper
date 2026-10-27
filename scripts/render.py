@@ -24,10 +24,21 @@ def load_env(path: Path) -> dict[str, str]:
         if not line or line.startswith("#") or "=" not in line:
             continue
         key, value = line.split("=", 1)
-        value = value.strip().strip("\"'")
+        key = key.strip()
+        if key.startswith("export "):
+            key = key[len("export "):].strip()
+        value = parse_value(value.strip())
         if value:
-            values[key.strip()] = value
+            values[key] = value
     return values
+
+
+def parse_value(raw: str) -> str:
+    """Unquote a value and drop a trailing ` # comment`."""
+    if raw[:1] in ("'", '"'):
+        end = raw.find(raw[0], 1)
+        return raw[1:end] if end > 0 else raw[1:]
+    return raw.split(" #", 1)[0].strip()
 
 
 def render(text: str, values: dict[str, str]) -> tuple[str, set[str]]:
@@ -44,7 +55,9 @@ def host_settings(values: dict[str, str]) -> Optional[tuple[str, str]]:
     if host_type not in HOST_TYPES:
         print(f"HOST_TYPE must be one of {', '.join(HOST_TYPES)}")
         return None
-    juniper_dir = os.path.expanduser(values.get("JUNIPER_DIR", ""))
+    juniper_dir = values.get("JUNIPER_DIR", "")
+    if host_type == "local":
+        juniper_dir = os.path.expanduser(juniper_dir)
     if not os.path.isabs(juniper_dir):
         print("JUNIPER_DIR must be an absolute path")
         return None
@@ -66,9 +79,9 @@ def main() -> int:
         shutil.rmtree(OUT)
     skipped: dict[str, set[str]] = {}
     for src in sorted(SRC.rglob("*")):
-        if src.is_dir():
-            continue
         rel = src.relative_to(SRC)
+        if src.is_dir() or any(p.startswith(".") for p in rel.parts):
+            continue
         filled, missing = render(src.read_text(), values)
         if missing:
             skipped[str(rel)] = missing

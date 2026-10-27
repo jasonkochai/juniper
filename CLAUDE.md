@@ -1,16 +1,20 @@
 # Juniper: instructions for Claude Code
 
-This repo sets up Juniper, a multi-agent OpenClaw assistant, in Docker on a host the user picks: a UGREEN NAS, any always-on Linux box (Raspberry Pi, mini PC, server), or their own computer. Your job is to take the user from wherever they are to a working, locked-down system by following [docs/setup.md](docs/setup.md) phase by phase. The user wants you to do the work, not hand them a guide: run every step you can yourself, and give them only what needs a human.
+This repo sets up Juniper, a multi-agent OpenClaw assistant, in Docker on a host the user picks: a UGREEN home server, any always-on Linux box (Raspberry Pi, mini PC, server), or their own computer. Your job is to take the user from wherever they are to a working, locked-down system by following [docs/setup.md](docs/setup.md) phase by phase. The user wants you to do the work, not hand them a guide: run every step you can yourself, and give them only what needs a human.
 
 ## First: the host
 
 Read [docs/hosts.md](docs/hosts.md). If `juniper.local.env` has no `HOST_TYPE` yet, ask the user what they have and recommend one:
 
-- UGREEN NAS → `ugos`.
+- UGREEN home server → `ugos`.
 - Any other device that is on all the time → `linux`. Check it's 64-bit with 4 GB+ RAM (`uname -m`, `free -h`), has Docker with compose (`docker compose version`) and Tailscale.
 - Nothing always-on, or just trying it → `local`. Say the trade-offs out loud: agents stop when the computer sleeps, scheduled jobs are missed, and it runs on their daily machine.
 
 Then set `HOST_TYPE`, `JUNIPER_DIR`, `HOST_SSH` (empty for local) and `CONTROL_UI_ORIGIN`.
+
+## Then: the models
+
+Ask whether they want the default cloud models (Claude Haiku plus Gemini Flash-Lite, cheap, best quality) or a fully local setup with their own model server. For local, follow [docs/local-llm.md](docs/local-llm.md): apply its changes to the phase configs in their clone before Phase 1, run `host.sh agent` with `JUNIPER_AGENT_MODEL`, and skip the Anthropic and Google accounts in step 1.7. Voice and image generation are off in that mode.
 
 ## How work is split
 
@@ -47,7 +51,7 @@ The templates carry the author's defaults. For anyone else, before Phase 1:
 ## Starting a session
 
 1. If `juniper.local.env` is missing, copy `juniper.env.example`, settle the host (above), fill what the user knows.
-2. Server: check `ssh "$HOST_SSH" true`. If it fails, Tailscale on this computer is probably off.
+2. Server: check `ssh -o BatchMode=yes "$HOST_SSH" true`. You can't type an SSH password, so if it asks for one, have the user set up key login (docs/setup.md, Phase 0). If it times out, Tailscale on this computer is probably off. Your shell doesn't keep variables between commands: source `juniper.local.env` in the same command that uses `$HOST_SSH`.
 3. Find out where the system stands: run (local) or ask the user to run (server) `host.sh check`, then read `~/juniper-report.txt` on the host. Agents, cron jobs and MCP servers in it show which phase is done.
 4. Continue at the first unfinished step in [docs/setup.md](docs/setup.md). Each phase ends with `host.sh check`, a Telegram tool check per new agent, and the audit target (0 critical, only the three known warnings).
 
@@ -68,4 +72,4 @@ The templates carry the author's defaults. For anyone else, before Phase 1:
 
 ## State of the author's live system
 
-UGREEN NAS (`ugos`). Phases 1 to 3 (hub, Calendar, Events, Email) are tested there. Phase 4 (News, voice, images, Obsidian via Syncthing) is being set up. Phase 5 (Comments via Composio) is planned, not live. The `linux` and `local` paths use the same configs but haven't been run end to end yet.
+UGREEN home server (`ugos`). Phases 1 to 3 (hub, Calendar, Events, Email) run there. Phase 4 is optional and experimental: the author hasn't set up News or the Obsidian notes on their own system. The author has also run Juniper fully locally with a local LLM ([docs/local-llm.md](docs/local-llm.md)). The `local` path was run end to end in Docker Desktop with dummy keys (every host.sh step, all four phase configs through `config validate`, the Obsidian mount, Syncthing, the read-only rule files); model calls weren't tested. The `linux` path hasn't run on real hardware yet.
