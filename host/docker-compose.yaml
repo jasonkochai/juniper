@@ -1,4 +1,4 @@
-# $JUNIPER_DIR/docker-compose.yaml (e.g. /volume1/docker/openclaw on a UGREEN NAS)
+# $JUNIPER_DIR/docker-compose.yaml (e.g. /volume1/docker/openclaw on a UGREEN home server)
 # Always run from $JUNIPER_DIR with: docker compose -p openclaw-agents ... (with sudo on a server)
 # After any change: up -d, never restart (restart does not re-read .env or mounts).
 services:
@@ -24,7 +24,6 @@ services:
       - ./workspace-events:/home/node/.openclaw/workspace-events
       - ./workspace-email:/home/node/.openclaw/workspace-email
       - ./workspace-news:/home/node/.openclaw/workspace-news
-      - ./workspace-comments:/home/node/.openclaw/workspace-comments
       - ./auth-secrets:/home/node/.config/openclaw
       - ./imap-mcp:/home/node/.imap-mcp                                  # Phase 3: encrypted IMAP account file
       - "${OBSIDIAN_ASSISTANT_DIR:-./obsidian-assistant}:/home/node/.openclaw/workspace/obsidian"   # Phase 4: vault/Assistant/ only
@@ -72,7 +71,6 @@ services:
       - ./workspace-events:/home/node/.openclaw/workspace-events
       - ./workspace-email:/home/node/.openclaw/workspace-email
       - ./workspace-news:/home/node/.openclaw/workspace-news
-      - ./workspace-comments:/home/node/.openclaw/workspace-comments
       - ./auth-secrets:/home/node/.config/openclaw
     cap_drop: [ALL]
     security_opt:
@@ -85,7 +83,7 @@ services:
   syncthing:                   # Phase 4 on a server (not needed for a local install); start it with: up -d syncthing
     image: syncthing/syncthing:2     # pin a version you've checked
     container_name: syncthing
-    hostname: nas-syncthing
+    hostname: juniper-syncthing
     environment: [PUID=1000, PGID=1000]
     volumes:
       - ./syncthing:/var/syncthing

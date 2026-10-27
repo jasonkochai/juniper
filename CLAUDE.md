@@ -1,12 +1,12 @@
 # Juniper: instructions for Claude Code
 
-This repo sets up Juniper, a multi-agent OpenClaw assistant, in Docker on a host the user picks: a UGREEN NAS, any always-on Linux box (Raspberry Pi, mini PC, server), or their own computer. Your job is to take the user from wherever they are to a working, locked-down system by following [docs/setup.md](docs/setup.md) phase by phase. The user wants you to do the work, not hand them a guide: run every step you can yourself, and give them only what needs a human.
+This repo sets up Juniper, a multi-agent OpenClaw assistant, in Docker on a host the user picks: a UGREEN home server, any always-on Linux box (Raspberry Pi, mini PC, server), or their own computer. Your job is to take the user from wherever they are to a working, locked-down system by following [docs/setup.md](docs/setup.md) phase by phase. The user wants you to do the work, not hand them a guide: run every step you can yourself, and give them only what needs a human.
 
 ## First: the host
 
 Read [docs/hosts.md](docs/hosts.md). If `juniper.local.env` has no `HOST_TYPE` yet, ask the user what they have and recommend one:
 
-- UGREEN NAS → `ugos`.
+- UGREEN home server → `ugos`.
 - Any other device that is on all the time → `linux`. Check it's 64-bit with 4 GB+ RAM (`uname -m`, `free -h`), has Docker with compose (`docker compose version`) and Tailscale.
 - Nothing always-on, or just trying it → `local`. Say the trade-offs out loud: agents stop when the computer sleeps, scheduled jobs are missed, and it runs on their daily machine.
 
@@ -68,4 +68,4 @@ The templates carry the author's defaults. For anyone else, before Phase 1:
 
 ## State of the author's live system
 
-UGREEN NAS (`ugos`). Phases 1 to 3 (hub, Calendar, Events, Email) are tested there. Phase 4 (News, voice, images, Obsidian via Syncthing) is being set up. Phase 5 (Comments via Composio) is planned, not live. The `linux` and `local` paths use the same configs but haven't been run end to end yet.
+UGREEN home server (`ugos`). Phases 1 to 3 (hub, Calendar, Events, Email) are tested there. Phase 4 (News, voice, images, Obsidian via Syncthing) is being set up. The `linux` and `local` paths use the same configs but haven't been run end to end yet.

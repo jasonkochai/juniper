@@ -1,6 +1,6 @@
 # Setup runbook
 
-Five phases, in order. Each step says who does it:
+Four phases, in order. Each step says who does it:
 
 - **You**: things only a human can do: accounts, app passwords, BotFather, typing secrets, Telegram tests.
 - **Host**: a command on the machine Juniper runs on, almost always `host.sh <command>`. On a server (`ugos`, `linux`) you paste it into your own SSH session as `sudo bash ~/juniper/host.sh <command>`, because `sudo` asks for your password. On a `local` install Claude Code runs it itself: `bash build/host/host.sh <command>`.
@@ -75,7 +75,7 @@ On a local install, the same aliases without `sudo`.
 host.sh expose
 ```
 
-- `ugos`: nothing to do; UGOS's userspace Tailscale forwards `NAS_IP:18789` to `127.0.0.1:18789`.
+- `ugos`: nothing to do; UGOS's userspace Tailscale forwards `<tailscale ip>:18789` to `127.0.0.1:18789`.
 - `linux`: sets up `tailscale serve --bg --tcp=18789 tcp://localhost:18789`, tailnet only, persistent.
 - `local`: nothing to do; open `http://localhost:18789`.
 
@@ -110,7 +110,7 @@ Set the cap **before** the key goes in:
 ### 1.9 Forum group (You, then Claude)
 
 1. New group "Agents", bot as the only member. Group info → *Edit* → turn on *Topics*.
-2. Topics: 📅 Calendar, 🎟️ Events, 📧 Email, 📰 News, 💬 Comments. General is topic 1.
+2. Topics: 📅 Calendar, 🎟️ Events, 📧 Email, 📰 News. General is topic 1.
 3. Make the bot an **admin** (no extra rights) so it reads messages without a mention. Revoke the primary invite link.
 4. Send one message in General and one in each topic, then run `host.sh ids`. It asks the Bot API for recent updates and prints only sender ID, chat ID (`-100…`), topic ID and the first words of each message. It only works while nothing else polls the bot (before 1.6, or with the gateway stopped), otherwise Telegram answers 409. With the gateway running, use `openclaw logs --follow` instead.
 5. **Claude:** write the IDs into `juniper.local.env`, re-render (and rsync).
@@ -304,7 +304,7 @@ Only that one folder, never the whole vault.
 1. **Host:** `cd "$JUNIPER_DIR" && sudo docker compose -p openclaw-agents up -d syncthing`, then `host.sh expose syncthing`.
 2. **Claude (Mac):** `brew install syncthing && brew services start syncthing`.
 3. **You:** open `http://<host tailscale ip>:8384`, set a GUI user and password, turn off global discovery and relays.
-4. **Claude:** on the Mac, add the host device at `tcp://<host tailscale ip>:22000` (on UGOS the NAS can't dial tailnet IPs, so the Mac dials). Share **only** `<vault>/Assistant`, never the vault root; accept it on the host at `/var/syncthing/Assistant`. Turn on file versioning on the Mac side: it's the undo for agent edits.
+4. **Claude:** on the Mac, add the host device at `tcp://<host tailscale ip>:22000` (on UGOS the server can't dial tailnet IPs, so the Mac dials). Share **only** `<vault>/Assistant`, never the vault root; accept it on the host at `/var/syncthing/Assistant`. Turn on file versioning on the Mac side: it's the undo for agent edits.
 
 Verify: a new `Assistant/hello.md` shows up in `$JUNIPER_DIR/obsidian-assistant/` owned by uid 1000, and nothing else from the vault does. If the vault is in iCloud Drive, keep `Assistant/` downloaded.
 
@@ -322,16 +322,6 @@ Verify in the DM: *"Create a note 'Video ideas: agents' with three bullet points
 
 Run the same real tasks on 2–3 models (`/model …`, `/usage cost`) and keep the best quality per cent. Stay under 100k prompt tokens on Haiku (above that every price is 5×). Then `host.sh check` and the full [security checklist](security.md).
 
-## Phase 5 (later): Comments
-
-Not part of the live system yet. Composio as a remote MCP server with your own Meta and Google OAuth apps, read scopes only (`instagram_business_basic`, `instagram_business_manage_comments`, `youtube.readonly`), and an `allowed_tools` list of four read tools. The official Composio OpenClaw plugin is ruled out because it needs `exec`.
-
-1. **You:** Composio Hobby project, `COMPOSIO_API_KEY` in `.env`, OAuth apps, auth configs with trimmed scopes.
-2. **Host:** create the MCP server once in a throwaway `python:3.12-slim` container (`composio.mcp.create(…)` with the four tools), note the server ID and user ID.
-3. **Claude:** add `COMPOSIO_SERVER_ID` and `COMPOSIO_USER_ID` to `juniper.local.env`, re-render (and rsync).
-4. **Host:** `host.sh agent comments`, `host.sh config 5`, `host.sh cron comments`.
-
-Drafts only; you post them. Add reply permissions only after two weeks of good drafts, and keep a per-reply "yes".
 
 ## Weekly (5 minutes)
 

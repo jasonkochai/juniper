@@ -4,7 +4,7 @@ Juniper runs in Docker on any 64-bit machine. Pick one of three host types and s
 
 | | `ugos` | `linux` | `local` |
 | --- | --- | --- | --- |
-| What | UGREEN NAS with UGOS | any always-on Linux box: Raspberry Pi, mini PC, other NAS, home server, VPS | this computer, with Docker Desktop |
+| What | UGREEN home server with UGOS | any always-on Linux box: Raspberry Pi, mini PC, other home server, VPS | this computer, with Docker Desktop |
 | Good for | the setup this repo was built and tested on | the default for a new install | trying Juniper out |
 | Always on | yes | yes | only while the computer is awake |
 | Reached from your phone | Tailscale (UGOS forwards automatically) | Tailscale (`host.sh expose`) | no, only Telegram |
@@ -21,9 +21,9 @@ Telegram works the same on all three: the bot polls Telegram, so no host needs a
 - **Docker Engine with the compose plugin** (`docker compose version` works), plus `bash`, `curl`, `openssl` and `python3`.
 - **Tailscale** for the server types, so the Control UI is reachable from your devices and nothing else.
 
-## `ugos`: UGREEN NAS
+## `ugos`: UGREEN home server
 
-- Install the Tailscale app from the UGOS app centre. It runs in **userspace mode**: the NAS has no `100.x` interface, and tailnet connections to the NAS are forwarded to `127.0.0.1`. That's why every port is published on `127.0.0.1` only and nothing more is needed.
+- Install the Tailscale app from the UGOS app centre. It runs in **userspace mode**: the server has no `100.x` interface, and tailnet connections to it are forwarded to `127.0.0.1`. That's why every port is published on `127.0.0.1` only and nothing more is needed.
 - Enable SSH in *Control Panel → Terminal* while you configure; turn it off afterwards.
 - Your user isn't in the `docker` group, so every docker command needs `sudo`. Keep it that way.
 - If you use the UGOS *Docker → Project* screen, name the project `openclaw-agents`. Some users report that the UI rewrites compose files; re-run `host.sh compose` if it does.
@@ -49,8 +49,8 @@ Telegram works the same on all three: the bot polls Telegram, so no host needs a
 
 ## How Claude Code picks
 
-If the user hasn't decided, Claude Code asks two questions: is there a device that is on all the time (NAS, Raspberry Pi, mini PC)? Is it a UGREEN NAS? Then:
+If the user hasn't decided, Claude Code asks two questions: is there a device that is on all the time (home server, Raspberry Pi, mini PC)? Is it a UGREEN home server? Then:
 
-- UGREEN NAS → `ugos`.
+- UGREEN home server → `ugos`.
 - Any other always-on Linux device → `linux`. If there's none, a Raspberry Pi 5 with 8 GB is the cheapest good option.
 - Nothing yet, or just trying → `local`, with the trade-offs above said out loud.

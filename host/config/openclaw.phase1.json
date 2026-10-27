@@ -123,9 +123,6 @@
             },
             "{{NEWS_TOPIC_ID}}": {
               "requireMention": true
-            },
-            "{{COMMENTS_TOPIC_ID}}": {
-              "requireMention": true
             }
           }
         }

@@ -10,7 +10,7 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=/dev/null
 . "$HERE/host.env"
 OC_DIR="${OC_DIR:-$JUNIPER_DIR}"
-AGENTS="calendar events email news comments"
+AGENTS="calendar events email news"
 SUDO="sudo "
 [ "$HOST_TYPE" = "local" ] && SUDO=""
 
@@ -170,7 +170,7 @@ cmd_config() {
 model_for() {
     case "$1" in
         calendar|email) echo "anthropic/claude-haiku-5-5" ;;
-        events|news|comments) echo "google/gemini-3.5-flash-lite" ;;
+        events|news) echo "google/gemini-3.5-flash-lite" ;;
         *) die "unknown agent: $1 (one of: $AGENTS)" ;;
     esac
 }
@@ -289,7 +289,7 @@ usage: ${SUDO}bash host.sh <command>      (host type: $HOST_TYPE, data: $OC_DIR)
   env                    create .env with a gateway token, list unfilled keys (1.3)
   compose                install docker-compose.yaml, start if configured (1.4)
   expose [syncthing]     make the gateway (or Syncthing) reachable over Tailscale (1.5)
-  config <1-5> [--dry-run]  merge openclaw.phaseN.json into the live config (1.6 workflow)
+  config <1-4> [--dry-run]  merge openclaw.phaseN.json into the live config (1.6 workflow)
   workspace <main|agent> install AGENTS.md, IDENTITY.md, SOUL.md, USER.md
   agent <id>             openclaw agents add + workspace files ($AGENTS)
   cron <agent>           add that agent's scheduled jobs

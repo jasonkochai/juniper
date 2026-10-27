@@ -324,9 +324,6 @@
             },
             "{{NEWS_TOPIC_ID}}": {
               "agentId": "news"
-            },
-            "{{COMMENTS_TOPIC_ID}}": {
-              "requireMention": true
             }
           }
         }

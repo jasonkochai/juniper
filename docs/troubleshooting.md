@@ -1,6 +1,6 @@
 # Troubleshooting
 
-Errors and fixes from the real install (UGREEN NAS, OpenClaw 2026.10.5) and the OpenClaw docs. Commands are written for a server; drop `sudo` on a local install. Step numbers match [setup.md](setup.md).
+Errors and fixes from the real install (UGREEN home server, OpenClaw 2026.10.5) and the OpenClaw docs. Commands are written for a server; drop `sudo` on a local install. Step numbers match [setup.md](setup.md).
 
 ## 1.1 Inspect and back up the current container
 
