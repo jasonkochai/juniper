@@ -16,6 +16,7 @@ services:
       OPENCLAW_WORKSPACE_DIR: /home/node/.openclaw/workspace
       OPENCLAW_GATEWAY_PORT: "18789"
       OPENCLAW_DISABLE_BONJOUR: "1"
+      npm_config_cache: /home/node/.openclaw/npm-cache   # MCP packages survive a container recreate
       TZ: {{TIMEZONE}}
     volumes:
       - ./config:/home/node/.openclaw
@@ -24,6 +25,23 @@ services:
       - ./workspace-events:/home/node/.openclaw/workspace-events
       - ./workspace-email:/home/node/.openclaw/workspace-email
       - ./workspace-news:/home/node/.openclaw/workspace-news
+      # rule files read-only: the container owns the folders, so file modes alone
+      # can't stop a rename-over. host.sh layout creates them before the first start.
+      - ./workspace/AGENTS.md:/home/node/.openclaw/workspace/AGENTS.md:ro
+      - ./workspace/SOUL.md:/home/node/.openclaw/workspace/SOUL.md:ro
+      - ./workspace/USER.md:/home/node/.openclaw/workspace/USER.md:ro
+      - ./workspace-calendar/AGENTS.md:/home/node/.openclaw/workspace-calendar/AGENTS.md:ro
+      - ./workspace-calendar/SOUL.md:/home/node/.openclaw/workspace-calendar/SOUL.md:ro
+      - ./workspace-calendar/USER.md:/home/node/.openclaw/workspace-calendar/USER.md:ro
+      - ./workspace-events/AGENTS.md:/home/node/.openclaw/workspace-events/AGENTS.md:ro
+      - ./workspace-events/SOUL.md:/home/node/.openclaw/workspace-events/SOUL.md:ro
+      - ./workspace-events/USER.md:/home/node/.openclaw/workspace-events/USER.md:ro
+      - ./workspace-email/AGENTS.md:/home/node/.openclaw/workspace-email/AGENTS.md:ro
+      - ./workspace-email/SOUL.md:/home/node/.openclaw/workspace-email/SOUL.md:ro
+      - ./workspace-email/USER.md:/home/node/.openclaw/workspace-email/USER.md:ro
+      - ./workspace-news/AGENTS.md:/home/node/.openclaw/workspace-news/AGENTS.md:ro
+      - ./workspace-news/SOUL.md:/home/node/.openclaw/workspace-news/SOUL.md:ro
+      - ./workspace-news/USER.md:/home/node/.openclaw/workspace-news/USER.md:ro
       - ./auth-secrets:/home/node/.config/openclaw
       - ./imap-mcp:/home/node/.imap-mcp                                  # Phase 3: encrypted IMAP account file
       - "${OBSIDIAN_ASSISTANT_DIR:-./obsidian-assistant}:/home/node/.openclaw/workspace/obsidian"   # Phase 4: vault/Assistant/ only

@@ -247,6 +247,7 @@
           "CALDAV_USERNAME": "${ICLOUD_USER}",
           "CALDAV_PASSWORD": "${ICLOUD_CAL_APP_PASSWORD}"
         },
+        "connectionTimeoutMs": 120000,
         "requestTimeoutMs": 20000,
         "toolFilter": {
           "include": [

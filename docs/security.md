@@ -49,7 +49,7 @@
 * Exec is denied for **every** agent: `tools.deny` includes `exec` and `group:runtime`, and `tools.exec.mode: "deny"`. **`tools.codeMode: false`**, because Code Mode's own exec bypasses those denies. No agent lists `exec`/`wait`, and the hostname test is refused. Never `/exec security=full` or `mode: "full"`.
 * `tools.elevated.enabled: false`
 * No ClawHub skills are installed. The only integrations are two **version-pinned** MCP servers (`caldav-mcp@0.10.0`, `imap-mcp-server@2.2.0`). Any new skill or server goes through the vetting list below.
-* Every `AGENTS.md` says "never install skills". Every agent's `AGENTS.md`, `SOUL.md` and `USER.md` are root-owned (`chmod 444` on a local install), so the agents' file tools can't edit them in place.
+* Every `AGENTS.md` says "never install skills". Every agent's `AGENTS.md`, `SOUL.md` and `USER.md` are root-owned (`chmod 444` on a local install) and mounted read-only into the container, so the agents' file tools can't edit, delete or replace them.
 * Separate app-specific passwords `openclaw-mail` and `openclaw-cal`, kept only in `.env`. Your main Apple Account password is never used anywhere on the host.
 * The mail server has `IMAP_MCP_READ_ONLY=true`, `toolFilter` passes only the 3 read tools, and no SMTP account is configured. Tested: delete and send requests fail.
 * The calendar server has no `delete-event` tool, new events go to the *Agent* calendar only, and every create or change needs your "yes". Or: a second Apple ID makes your other calendars read-only, enforced by Apple.

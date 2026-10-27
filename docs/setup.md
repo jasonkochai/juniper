@@ -8,7 +8,9 @@ Four phases, in order. Each step says who does it:
 
 Below, `host.sh` means whichever of those two forms fits your host, and `$JUNIPER_DIR` is the data folder from `juniper.local.env`. Pick the host first: [hosts.md](hosts.md).
 
-Conventions (tested on a UGREEN DXP4800 Pro with OpenClaw 2026.10.5):
+Step numbers follow the original guide; the order below is the one that works (1.9 before 1.6).
+
+Conventions (tested on a UGREEN DXP4800 Pro with OpenClaw 2026.10.5, and the `local` path end to end in Docker Desktop):
 
 - Everything OpenClaw lives in `$JUNIPER_DIR`.
 - Compose always runs with `-p openclaw-agents` from that folder. After any compose or `.env` change use `up -d`, never `restart`.
@@ -40,7 +42,7 @@ Goal: a locked-down container; the hub answers only you, in the DM and the group
 
 ### 1.1 Back up an existing install (Host)
 
-Skip on a fresh machine. If OpenClaw already runs somewhere, look at what it can touch first:
+Skip on a fresh machine. Moving an existing Juniper install to this repo: run `host.sh layout` before `host.sh compose`, so the read-only rule files exist before Docker mounts them. If OpenClaw already runs somewhere, look at what it can touch first:
 
 ```sh
 docker ps --format '{{.Names}}\t{{.Image}}\t{{.Status}}'
@@ -127,7 +129,7 @@ host.sh config 1
 
 `config N` is the tested workflow as one command: stop the gateway, back up `openclaw.json`, merge the phase template in (OpenClaw's own `plugins`, `skills`, `meta`, `wizard`, `talk` blocks are kept), check the JSON, set owner and mode 600, start, wait for `/healthz` to say `live`, scan the log. On failure it prints the restore command.
 
-What the Phase 1 config does: `messaging` profile, **`codeMode: false`**, deny `exec`/`group:runtime`/`group:automation`/`group:ui`, files limited to the workspace, elevated off, agent-to-agent off, Telegram allowlisted to your ID in DM and group, auth rate limit, heartbeat off, 5-minute prompt cache.
+What the Phase 1 config does: `messaging` profile, **`codeMode: false`**, deny `exec`/`group:runtime`/`group:automation`/`group:ui`, no file tools for the hub yet (`fs.workspaceOnly` is set for Phase 4), elevated off, agent-to-agent off, Telegram allowlisted to your ID in DM and group, auth rate limit, heartbeat off, 5-minute prompt cache.
 
 **`codeMode: false` is not optional.** Unset, Code Mode is `auto` and engages for Gemini Flash-Lite: the agent then sees only `exec`/`wait` and runs model-written JavaScript, and that `exec` is not blocked by `tools.deny`.
 
@@ -141,7 +143,7 @@ Now the gateway runs: open `CONTROL_UI_ORIGIN` in a browser and paste the gatewa
 host.sh workspace main
 ```
 
-Installs `AGENTS.md`, `SOUL.md`, `USER.md` read-only for the container (root-owned on a server, `chmod 444` locally), so the agent's own file tools can't edit them. Memory files stay writable. `host.sh agent` installs the specialists' `AGENTS.md`, `SOUL.md` and `USER.md` the same way. Not yet tested: whether OpenClaw's `write` tool replaces a file by renaming over it, which the folder's owner (uid 1000) could still do. After Phase 4, ask the hub to overwrite `AGENTS.md`; it must fail. Verify: `/new`, *"What are your approval rules?"*, then *"Install the weather skill from ClawHub"* → it refuses.
+Installs `AGENTS.md`, `SOUL.md`, `USER.md` read-only for the container (root-owned on a server, `chmod 444` locally), and the compose file mounts each of them read-only, because the folder's owner (uid 1000) could otherwise replace them by renaming over them. Tested: inside the container, writing, deleting and renaming over them all fail. `host.sh agent` installs the specialists' files the same way. Memory stays writable through OpenClaw's memory system. Verify: `/new`, *"What are your approval rules?"*, then *"Install the weather skill from ClawHub"* → it refuses.
 
 ### 1.11 Audit, 1.12 panic drill
 
@@ -149,7 +151,7 @@ Installs `AGENTS.md`, `SOUL.md`, `USER.md` read-only for the container (root-own
 openclaw security audit --deep
 ```
 
-Target: 0 critical; at most `security.trust_model.multi_user_heuristic` (false alarm for a one-person group), `gateway.probe_failed … operator.read` (with `--deep`), and `plugins.installs_unpinned_npm_specs`. Never run `audit --fix`: it turns on sandboxing, which needs `docker.sock`.
+Target: 0 critical; at most `security.trust_model.multi_user_heuristic` (false alarm for a one-person group), `gateway.probe_failed … operator.read` (with `--deep`), and `plugins.installs_unpinned_npm_specs` (OpenClaw's doctor installs the Brave plugin unpinned at first start; step 4.1 pins it). Never run `audit --fix`: it turns on sandboxing, which needs `docker.sock`.
 
 **You:** stop the container once from your phone (UGOS app, or `docker stop openclaw-gateway` over SSH), check the bot goes silent, start it again. See [security.md](security.md#panic-button).
 
@@ -298,7 +300,7 @@ host.sh config 4
 host.sh cron news
 ```
 
-The Phase 4 config adds: News (web_fetch + web_search only, `maxChars` 10,000), audio transcription on `gemini-3.5-flash-lite`, image generation on `google/gemini-3.1-flash-image` (hub only, about $0.07 an image), and the hub's Obsidian file access (4.7). Copy the exact model refs from `openclaw models list --agent main --provider google` if they differ. Tool check in the DM after `config 4`: the hub now also lists `read`, `write`, `edit` and `image_generate`, and no `apply_patch`.
+The Phase 4 config adds: News (web_fetch + web_search only, `maxChars` 10,000), audio transcription on `gemini-3.5-flash-lite`, image generation on `google/gemini-3.1-flash-image` (hub only, about $0.07 an image), and the hub's Obsidian file access (4.7). Copy the text model refs from `openclaw models list --provider google` if they differ; image models aren't listed there. Tool check in the DM after `config 4`: the hub now also lists `read`, `write`, `edit` and `image_generate`, and no `apply_patch`.
 
 ### 4.5 Get the vault's `Assistant/` folder onto the host
 
@@ -317,10 +319,11 @@ Verify: a new `Assistant/hello.md` shows up in `$JUNIPER_DIR/obsidian-assistant/
 
 ### 4.7 Hub access to notes (Host)
 
-The vault folder is mounted inside the hub's workspace (`workspace/obsidian`), because `fs.workspaceOnly` blocks anything outside it. The Phase 4 config gives main `alsoAllow: read, write, edit` and denies `apply_patch` (a patch can delete files). Create the log file (in the vault folder on a local install; `sudo` and `chown 1000:1000` on a server):
+The vault folder is mounted inside the hub's workspace (`workspace/obsidian`), because `fs.workspaceOnly` blocks anything outside it. The Phase 4 config gives main `alsoAllow: read, write, edit` and denies `apply_patch` (a patch can delete files). Create the log file:
 
 ```sh
-touch "$JUNIPER_DIR/obsidian-assistant/_log.md"
+sudo touch "$JUNIPER_DIR/obsidian-assistant/_log.md" && sudo chown 1000:1000 "$JUNIPER_DIR/obsidian-assistant/_log.md"   # server
+touch "/path/to/vault/Assistant/_log.md"                                                                                   # local: your OBSIDIAN_ASSISTANT_DIR
 ```
 
 Verify in the DM: *"Create a note 'Video ideas: agents' with three bullet points"* → confirm → it appears in Obsidian and `_log.md` gets a line. *"Delete that note"* → it can't. *"Read my Journal folder"* → it only has `Assistant/`.

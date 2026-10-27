@@ -72,4 +72,4 @@ The templates carry the author's defaults. For anyone else, before Phase 1:
 
 ## State of the author's live system
 
-UGREEN home server (`ugos`). Phases 1 to 3 (hub, Calendar, Events, Email) run there. Phase 4 is optional and experimental: the author hasn't set up News or the Obsidian notes on their own system. The author has also run Juniper fully locally with a local LLM ([docs/local-llm.md](docs/local-llm.md)). The `linux` and `local` paths use the same configs but haven't been run end to end yet.
+UGREEN home server (`ugos`). Phases 1 to 3 (hub, Calendar, Events, Email) run there. Phase 4 is optional and experimental: the author hasn't set up News or the Obsidian notes on their own system. The author has also run Juniper fully locally with a local LLM ([docs/local-llm.md](docs/local-llm.md)). The `local` path was run end to end in Docker Desktop with dummy keys (every host.sh step, all four phase configs through `config validate`, the Obsidian mount, Syncthing, the read-only rule files); model calls weren't tested. The `linux` path hasn't run on real hardware yet.

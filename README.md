@@ -72,7 +72,7 @@ One Telegram bot, one private group, one topic per agent. You talk to the main a
 | 📰 | **News** | writes a short AI news digest every morning | anything except reading the web | 🧪 experimental |
 | 📝 | **Notes** (part of Juniper) | reads and writes notes in one Obsidian folder, logs every change | delete notes, see the rest of your vault | 🧪 experimental |
 
-✅ = running on my home server. 🧪 = included because I wanted to try it; not running on my own setup yet.
+✅ = running on my home server. 🧪 = included because I wanted to try it; not running on my own setup yet. The whole local setup, notes folder included, was tested end to end in Docker.
 
 **A normal day:**
 
@@ -183,7 +183,7 @@ Juniper reads your mail, calendar and notes, so it's built to fail safe:
 - **No commands, ever.** Shell access and OpenClaw's "Code Mode" are off for every agent.
 - **Split permissions.** Agents that read untrusted text (emails, web pages, event feeds) can only post in their own topic. Events can hand an event to Calendar, and only after you reply "registered N".
 - **Secrets stay put.** Keys live in one file on the host. Claude Code never reads it.
-- **Rules aren't changed through chat.** The main assistant's instructions are read-only to the container, and every agent refuses rule changes sent as messages; you change them in this repo.
+- **Rules can't be rewritten by an agent.** Every agent's instruction files are mounted read-only into the container (tested: editing, deleting and replacing them all fail), and every agent refuses rule changes sent as messages. You change them in this repo.
 - **Panic button.** Stop everything from your phone in under a minute: [docs/security.md](docs/security.md#panic-button).
 
 ## 🔧 Set it up by hand

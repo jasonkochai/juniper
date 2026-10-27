@@ -100,6 +100,9 @@ Files named `*.sync-conflict-*.md` appear when the same note changed in two plac
 
 ## The helper scripts
 
+* **A rule file shows up as a folder, or `host.sh compose` fails with "not a directory".** Docker created `AGENTS.md`, `SOUL.md` or `USER.md` as a folder because it didn't exist yet. Stop the gateway, remove that empty folder, run `host.sh layout`, then `host.sh compose`.
+* **`icloud-mail` or `icloud-cal` "did not complete initialize" on first start.** `npx` was still downloading. The configs allow 120 s and keep the npm cache in `config/npm-cache`; run `sudo docker compose -p openclaw-agents up -d --force-recreate openclaw-gateway` once if a half-finished download is stuck.
+
 * **`render.py` says "skipped … no value for X".** That file needs `X` in `juniper.local.env`. Files for later phases are skipped until their values exist; that's expected.
 * **`host.sh config N` says "no …/openclaw.phaseN.json".** It wasn't rendered (missing values) or wasn't copied. Re-render and rsync.
 * **`host.sh config N` says "gateway not live".** It prints the log lines and the restore command for the backup it just made. Run that command, then `sudo docker compose -p openclaw-agents up -d openclaw-gateway`.

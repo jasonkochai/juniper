@@ -28,6 +28,8 @@ redact() {
         -e 's/[0-9a-f]{64}/[redacted]/g'
 }
 
+pretty() { python3 -m json.tool --no-ensure-ascii "$1" 2> /dev/null || python3 -m json.tool "$1"; }
+
 wait_live() {
     local i
     for i in $(seq 1 24); do
@@ -42,7 +44,7 @@ wait_live() {
 
 config_errors() {
     docker logs --tail 60 openclaw-gateway 2>&1 \
-        | grep -iE "blocked|invalid|unknown key|error" | redact || echo "no config errors in the log"
+        | grep -iE "blocked|invalid|unknown key|error|failed to start" | redact || echo "no config errors in the log"
 }
 
 cmd_backup() {
@@ -70,6 +72,13 @@ cmd_layout() {
     own 1000:1000 $dirs
     chmod 700 config auth-secrets imap-mcp
     chmod 750 workspace workspace-*
+    # compose mounts the rule files read-only, so they must exist as files before the first start
+    local d f
+    for d in workspace $(printf 'workspace-%s ' $AGENTS); do
+        for f in AGENTS.md SOUL.md USER.md; do
+            [ -e "$d/$f" ] || : > "$d/$f"
+        done
+    done
     ls -ln
 }
 
@@ -123,7 +132,11 @@ cmd_expose() {
         ugos)
             echo "nothing to do: UGOS runs Tailscale in userspace mode and forwards tailnet connections to 127.0.0.1" ;;
         local)
-            echo "nothing to do: a local install is only reachable on this computer (http://localhost:18789)" ;;
+            if [ "$what" = "syncthing" ]; then
+                echo "nothing to do: a local install mounts the vault folder directly, no Syncthing"
+            else
+                echo "nothing to do: a local install is only reachable on this computer (http://localhost:18789)"
+            fi ;;
         linux)
             command -v tailscale > /dev/null || die "install Tailscale first: https://tailscale.com/download/linux"
             for p in $ports; do
@@ -146,7 +159,7 @@ cmd_config() {
     python3 "$HERE/merge_config.py" "$live" "$tpl" > "$tmp"
     python3 -m json.tool "$tmp" > /dev/null || die "merged config is not valid JSON"
     if [ "$mode" = "--dry-run" ]; then
-        diff <(python3 -m json.tool "$live" 2> /dev/null || true) <(python3 -m json.tool "$tmp") || true
+        diff <(pretty "$live" 2> /dev/null || true) <(pretty "$tmp") || true
         rm -f "$tmp"
         return
     fi
@@ -165,6 +178,10 @@ cmd_config() {
         config_errors
         [ -n "$bak" ] && echo "restore with: ${SUDO}cp $OC_DIR/$bak $OC_DIR/$live"
         die "gateway not live after the config change"
+    fi
+    if grep -q '"mcp"' "$live"; then
+        echo "waiting 45s for the MCP servers to start..."
+        sleep 45
     fi
     config_errors
     if grep -q '"icloud-cal"' "$live"; then
@@ -188,32 +205,15 @@ model_for() {
     esac
 }
 
-cmd_workspace() {
-    # steps 1.10 and 2.3: instruction files from the bundle, never edited through chat
-    local id="${1:-}" src="$HERE/workspaces" f
-    [ -n "$id" ] || die "usage: host.sh workspace <main|agent>"
-    [ -f "$src/$id/AGENTS.md" ] || die "no rendered $src/$id/AGENTS.md (missing values?)"
-    cd "$OC_DIR"
-    if [ "$id" = "main" ]; then
-        rm -f workspace/AGENTS.md workspace/SOUL.md workspace/USER.md   # may be read-only
-        cp "$src/main/AGENTS.md" "$src/shared/SOUL.md" "$src/shared/USER.md" workspace/
-        for f in AGENTS.md SOUL.md USER.md; do
-            if [ "$HOST_TYPE" = "local" ]; then
-                chmod 444 "workspace/$f"     # read-only for the container
-            else
-                chown root:root "workspace/$f"
-                chmod 644 "workspace/$f"
-            fi
-        done
-        ls -l workspace/*.md
-        return
-    fi
-    local dir="workspace-$id"
-    rm -f "$dir/BOOTSTRAP.md" "$dir/AGENTS.md" "$dir/IDENTITY.md" "$dir/SOUL.md" "$dir/USER.md"
-    cp "$src/$id/AGENTS.md" "$src/$id/IDENTITY.md" "$src/shared/SOUL.md" "$src/shared/USER.md" "$dir/"
-    own -R 1000:1000 "$dir"
-    # the rules stay read-only for the container; IDENTITY.md stays writable like the hub's
+install_rules() {
+    # AGENTS.md, SOUL.md, USER.md: written in place, because compose mounts each one read-only
+    # and a replaced file (new inode) would vanish from the running container
+    local dir="$1" agent_src="$2" f s
     for f in AGENTS.md SOUL.md USER.md; do
+        s="$HERE/workspaces/shared/$f"
+        [ -f "$agent_src/$f" ] && s="$agent_src/$f"
+        chmod u+w "$dir/$f" 2> /dev/null || true
+        cat "$s" > "$dir/$f"
         if [ "$HOST_TYPE" = "local" ]; then
             chmod 444 "$dir/$f"
         else
@@ -221,6 +221,23 @@ cmd_workspace() {
             chmod 644 "$dir/$f"
         fi
     done
+}
+
+cmd_workspace() {
+    # steps 1.10 and 2.3: instruction files from the bundle, never edited through chat
+    local id="${1:-}" src="$HERE/workspaces" dir
+    [ -n "$id" ] || die "usage: host.sh workspace <main|agent>"
+    [ -f "$src/$id/AGENTS.md" ] || die "no rendered $src/$id/AGENTS.md (missing values?)"
+    cd "$OC_DIR"
+    if [ "$id" = "main" ]; then
+        dir="workspace"
+    else
+        dir="workspace-$id"
+        rm -f "$dir/BOOTSTRAP.md" "$dir/IDENTITY.md"
+        cp "$src/$id/IDENTITY.md" "$dir/"
+        own -R 1000:1000 "$dir"
+    fi
+    install_rules "$dir" "$src/$id"
     ls -ln "$dir"
 }
 

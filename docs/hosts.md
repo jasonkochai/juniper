@@ -44,7 +44,7 @@ Telegram works the same on all three: the bot polls Telegram, so no host needs a
 - **Trade-offs, in plain words:**
   - The agents stop when the computer sleeps, and scheduled jobs (morning overview, inbox summaries) are skipped.
   - The agents run on the machine you use every day. Docker Desktop's VM is the security boundary instead of a separate device.
-  - Instruction files are made read-only with `chmod 444` instead of being root-owned, which is weaker.
+  - Instruction files are protected by read-only file mounts, like on a server, but are owned by you rather than root.
 - **Moving to a server later:** stop the gateway and run `host.sh backup`. Change `HOST_TYPE` and `JUNIPER_DIR`, render and copy the bundle, then on the server run `host.sh layout` and `sudo tar xzf <archive> -C "$JUNIPER_DIR" --strip-components=1`. The archive keeps your computer's user ID, so run `sudo chown -R 1000:1000 "$JUNIPER_DIR"/config "$JUNIPER_DIR"/workspace* "$JUNIPER_DIR"/auth-secrets "$JUNIPER_DIR"/imap-mcp`, then `host.sh workspace` for main and each agent, and `host.sh compose`.
 
 ## How Claude Code picks
