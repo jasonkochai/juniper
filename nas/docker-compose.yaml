@@ -1,0 +1,100 @@
+# /volume1/docker/openclaw/docker-compose.yaml
+# Always run from /volume1/docker/openclaw with: sudo docker compose -p openclaw-agents ...
+# After any change: up -d, never restart (restart does not re-read .env or mounts).
+services:
+  openclaw-gateway:
+    image: ghcr.io/openclaw/openclaw:2026.10.5   # pin a version; upgrade on purpose
+    container_name: openclaw-gateway
+    user: "1000:1000"
+    env_file: .env
+    environment:
+      HOME: /home/node
+      OPENCLAW_HOME: /home/node
+      OPENCLAW_STATE_DIR: /home/node/.openclaw
+      OPENCLAW_CONFIG_PATH: /home/node/.openclaw/openclaw.json
+      OPENCLAW_CONFIG_DIR: /home/node/.openclaw
+      OPENCLAW_WORKSPACE_DIR: /home/node/.openclaw/workspace
+      OPENCLAW_GATEWAY_PORT: "18789"
+      OPENCLAW_DISABLE_BONJOUR: "1"
+      TZ: Europe/Berlin
+    volumes:
+      - ./config:/home/node/.openclaw
+      - ./workspace:/home/node/.openclaw/workspace
+      - ./workspace-calendar:/home/node/.openclaw/workspace-calendar
+      - ./workspace-events:/home/node/.openclaw/workspace-events
+      - ./workspace-email:/home/node/.openclaw/workspace-email
+      - ./workspace-news:/home/node/.openclaw/workspace-news
+      - ./workspace-comments:/home/node/.openclaw/workspace-comments
+      - ./auth-secrets:/home/node/.config/openclaw
+      - ./imap-mcp:/home/node/.imap-mcp                                  # Phase 3: encrypted IMAP account file
+      - ./obsidian-assistant:/home/node/.openclaw/workspace/obsidian     # Phase 4: vault/Assistant/ only
+      # NEVER: /volume1, photo/backup shares, /var/run/docker.sock
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 3g
+    memswap_limit: 3g
+    pids_limit: 256
+    ports:
+      - "127.0.0.1:18789:18789"     # localhost only; UGOS userspace Tailscale forwards 100.x:18789 here. Never 0.0.0.0 or a 100.x IP
+    init: true
+    restart: unless-stopped
+    command: ["node", "dist/index.js", "gateway", "--bind", "lan", "--port", "18789"]
+    healthcheck:
+      test: ["CMD", "node", "dist/docker-healthcheck.js"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  openclaw-cli:                # only for offline maintenance (gateway stopped): docker compose -p openclaw-agents run --rm openclaw-cli doctor
+    image: ghcr.io/openclaw/openclaw:2026.10.5
+    profiles: ["cli"]
+    network_mode: "none"
+    user: "1000:1000"
+    env_file: .env
+    environment:
+      HOME: /home/node
+      OPENCLAW_HOME: /home/node
+      OPENCLAW_STATE_DIR: /home/node/.openclaw
+      OPENCLAW_CONFIG_PATH: /home/node/.openclaw/openclaw.json
+      OPENCLAW_CONFIG_DIR: /home/node/.openclaw
+      OPENCLAW_WORKSPACE_DIR: /home/node/.openclaw/workspace
+      OPENCLAW_GATEWAY_PORT: "18789"
+      TZ: Europe/Berlin
+    volumes:
+      - ./config:/home/node/.openclaw
+      - ./workspace:/home/node/.openclaw/workspace
+      - ./workspace-calendar:/home/node/.openclaw/workspace-calendar
+      - ./workspace-events:/home/node/.openclaw/workspace-events
+      - ./workspace-email:/home/node/.openclaw/workspace-email
+      - ./workspace-news:/home/node/.openclaw/workspace-news
+      - ./workspace-comments:/home/node/.openclaw/workspace-comments
+      - ./auth-secrets:/home/node/.config/openclaw
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    stdin_open: true
+    tty: true
+    init: true
+    entrypoint: ["node", "dist/index.js"]
+
+  syncthing:                   # Phase 4 (Obsidian option A); start it with: up -d syncthing
+    image: syncthing/syncthing:2     # pin a version you've checked
+    container_name: syncthing
+    hostname: nas-syncthing
+    environment: [PUID=1000, PGID=1000]
+    volumes:
+      - ./syncthing:/var/syncthing
+      - ./obsidian-assistant:/var/syncthing/Assistant     # the ONLY vault folder on the NAS
+    cap_drop: [ALL]
+    cap_add: [CHOWN, SETUID, SETGID]   # image drops to PUID/PGID at start
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 256m
+    ports:
+      - "127.0.0.1:8384:8384"          # web GUI, reached via http://NAS_TAILSCALE_IP:8384 from the Mac
+      - "127.0.0.1:22000:22000/tcp"    # sync protocol, reached via userspace Tailscale forwarding
+    restart: unless-stopped

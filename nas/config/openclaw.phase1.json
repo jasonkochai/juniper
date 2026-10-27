@@ -1,0 +1,178 @@
+{
+  "gateway": {
+    "mode": "local",
+    "bind": "lan",
+    "port": 18789,
+    "auth": {
+      "mode": "token",
+      "token": "${OPENCLAW_GATEWAY_TOKEN}",
+      "rateLimit": {
+        "maxAttempts": 10,
+        "windowMs": 60000,
+        "lockoutMs": 300000
+      }
+    },
+    "controlUi": {
+      "allowedOrigins": [
+        "http://localhost:18789",
+        "http://127.0.0.1:18789",
+        "http://{{NAS_TAILSCALE_IP}}:18789"
+      ]
+    }
+  },
+  "session": {
+    "dmScope": "per-channel-peer"
+  },
+  "agents": {
+    "ownership": "explicit",
+    "defaults": {
+      "systemAgent": {
+        "agentId": "main"
+      },
+      "model": {
+        "primary": "anthropic/claude-haiku-5-5",
+        "fallbacks": [
+          "google/gemini-3.5-flash-lite"
+        ]
+      },
+      "models": {
+        "anthropic/claude-haiku-5-5": {
+          "alias": "haiku"
+        },
+        "anthropic/claude-sonnet-5-5": {
+          "alias": "sonnet"
+        },
+        "google/gemini-3.5-flash-lite": {
+          "alias": "gemini"
+        }
+      },
+      "modelPolicy": {
+        "allow": [
+          "anthropic/claude-haiku-5-5",
+          "anthropic/claude-sonnet-5-5",
+          "google/gemini-3.5-flash-lite"
+        ]
+      },
+      "params": {
+        "cacheRetention": "short"
+      },
+      "contextPruning": {
+        "mode": "cache-ttl",
+        "ttl": "1h"
+      },
+      "heartbeat": {
+        "every": "0m"
+      }
+    },
+    "entries": {
+      "main": {
+        "workspace": "~/.openclaw/workspace",
+        "skills": []
+      }
+    }
+  },
+  "tools": {
+    "profile": "messaging",
+    "codeMode": false,
+    "deny": [
+      "exec",
+      "group:runtime",
+      "group:automation",
+      "group:ui"
+    ],
+    "fs": {
+      "workspaceOnly": true
+    },
+    "exec": {
+      "mode": "deny"
+    },
+    "elevated": {
+      "enabled": false
+    },
+    "sessions": {
+      "visibility": "agent"
+    },
+    "agentToAgent": {
+      "enabled": false
+    }
+  },
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "botToken": "${TELEGRAM_BOT_TOKEN}",
+      "dmPolicy": "allowlist",
+      "allowFrom": [
+        "${TELEGRAM_OWNER_ID}"
+      ],
+      "groupPolicy": "allowlist",
+      "groups": {
+        "{{TELEGRAM_GROUP_ID}}": {
+          "requireMention": false,
+          "topics": {
+            "1": {
+              "agentId": "main"
+            },
+            "{{CAL_TOPIC_ID}}": {
+              "requireMention": true
+            },
+            "{{EVENTS_TOPIC_ID}}": {
+              "requireMention": true
+            },
+            "{{EMAIL_TOPIC_ID}}": {
+              "requireMention": true
+            },
+            "{{NEWS_TOPIC_ID}}": {
+              "requireMention": true
+            },
+            "{{COMMENTS_TOPIC_ID}}": {
+              "requireMention": true
+            }
+          }
+        }
+      },
+      "groupAllowFrom": [
+        "${TELEGRAM_OWNER_ID}"
+      ]
+    }
+  },
+  "commands": {
+    "ownerAllowFrom": [
+      "telegram:${TELEGRAM_OWNER_ID}"
+    ]
+  },
+  "bindings": [
+    {
+      "agentId": "main",
+      "match": {
+        "channel": "telegram",
+        "accountId": "default"
+      }
+    }
+  ],
+  "plugins": {
+    "entries": {
+      "google": {
+        "enabled": true
+      },
+      "anthropic": {
+        "enabled": true
+      }
+    }
+  },
+  "skills": {
+    "entries": {
+      "1password": {
+        "enabled": false
+      },
+      "github": {
+        "enabled": false
+      },
+      "obsidian": {
+        "enabled": false
+      },
+      "summarize": {
+        "enabled": false
+      }
+    }
+  }
+}
