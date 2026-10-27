@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🌿 Juniper
+# ⚡ Juniper
 
 **A private team of AI assistants that lives in one Telegram group.**<br>
 Calendar, email, events, news and notes, each handled by its own small agent,<br>
