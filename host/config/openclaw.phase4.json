@@ -16,7 +16,7 @@
       "allowedOrigins": [
         "http://localhost:18789",
         "http://127.0.0.1:18789",
-        "http://{{NAS_TAILSCALE_IP}}:18789"
+        "{{CONTROL_UI_ORIGIN}}"
       ]
     }
   },
@@ -62,6 +62,12 @@
       },
       "heartbeat": {
         "every": "0m"
+      },
+      "mediaModels": {
+        "image": {
+          "primary": "google/gemini-3.1-flash-image",
+          "timeoutMs": 180000
+        }
       }
     },
     "entries": {
@@ -69,7 +75,13 @@
         "workspace": "~/.openclaw/workspace",
         "skills": [],
         "tools": {
+          "alsoAllow": [
+            "read",
+            "write",
+            "edit"
+          ],
           "deny": [
+            "apply_patch",
             "icloud-cal__*",
             "icloud-mail__*"
           ],
@@ -191,6 +203,42 @@
             "send": []
           }
         }
+      },
+      "news": {
+        "name": "news",
+        "workspace": "/home/node/.openclaw/workspace-news",
+        "agentDir": "/home/node/.openclaw/agents/news/agent",
+        "identity": {
+          "name": "News",
+          "emoji": "📰"
+        },
+        "model": {
+          "primary": "google/gemini-3.5-flash-lite",
+          "fallbacks": [
+            "anthropic/claude-haiku-5-5"
+          ]
+        },
+        "skills": [],
+        "tools": {
+          "profile": "full",
+          "allow": [
+            "web_fetch",
+            "web_search",
+            "read",
+            "write",
+            "edit"
+          ],
+          "deny": [
+            "exec",
+            "process",
+            "group:runtime",
+            "icloud-cal__*",
+            "icloud-mail__*"
+          ],
+          "agentToAgent": {
+            "send": []
+          }
+        }
       }
     }
   },
@@ -222,6 +270,31 @@
         "calendar",
         "events"
       ]
+    },
+    "web": {
+      "search": {
+        "enabled": true,
+        "provider": "brave",
+        "maxResults": 8
+      },
+      "fetch": {
+        "enabled": true,
+        "maxChars": 10000
+      }
+    },
+    "media": {
+      "audio": {
+        "enabled": true
+      },
+      "models": [
+        {
+          "provider": "google",
+          "model": "gemini-3.5-flash-lite",
+          "capabilities": [
+            "audio"
+          ]
+        }
+      ]
     }
   },
   "channels": {
@@ -250,7 +323,7 @@
               "agentId": "email"
             },
             "{{NEWS_TOPIC_ID}}": {
-              "requireMention": true
+              "agentId": "news"
             },
             "{{COMMENTS_TOPIC_ID}}": {
               "requireMention": true

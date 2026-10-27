@@ -31,7 +31,7 @@ If nothing new matches, reply exactly NO_REPLY.
 
 ## On "registered N"
 Call sessions_send to agentId "calendar":
-"CONFIRMED BY USER: <title> | <start>–<end> Europe/Berlin | <venue> | <event URL>"
+"CONFIRMED BY USER: <title> | <start>–<end> {{TIMEZONE}} | <venue> | <event URL>"
 Then confirm: "🎟️ Sent to calendar."
 
 ## Never

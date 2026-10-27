@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
-"""Fill the {{PLACEHOLDERS}} in nas/ from juniper.local.env into build/nas/."""
+"""Fill the {{PLACEHOLDERS}} in host/ from juniper.local.env into build/."""
+import os
 import re
+import shlex
 import shutil
 import sys
 from pathlib import Path
+from typing import Optional
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / "nas"
+SRC = ROOT / "host"
 SCRIPTS = ROOT / "scripts"
-OUT = ROOT / "build" / "nas"
+OUT = ROOT / "build" / "host"
 PLACEHOLDER = re.compile(r"\{\{([A-Z0-9_]+)\}\}")
+HOST_TYPES = ("ugos", "linux", "local")
 
 
 def load_env(path: Path) -> dict[str, str]:
@@ -34,6 +38,19 @@ def render(text: str, values: dict[str, str]) -> tuple[str, set[str]]:
     return filled, missing
 
 
+def host_settings(values: dict[str, str]) -> Optional[tuple[str, str]]:
+    """Return HOST_TYPE and an absolute JUNIPER_DIR, or None if invalid."""
+    host_type = values.get("HOST_TYPE", "")
+    if host_type not in HOST_TYPES:
+        print(f"HOST_TYPE must be one of {', '.join(HOST_TYPES)}")
+        return None
+    juniper_dir = os.path.expanduser(values.get("JUNIPER_DIR", ""))
+    if not os.path.isabs(juniper_dir):
+        print("JUNIPER_DIR must be an absolute path")
+        return None
+    return host_type, juniper_dir
+
+
 def main() -> int:
     """Render every template and report files that still miss values."""
     default = ROOT / "juniper.local.env"
@@ -42,6 +59,9 @@ def main() -> int:
         print(f"missing {env_file}: copy juniper.env.example and fill it in")
         return 1
     values = load_env(env_file)
+    settings = host_settings(values)
+    if settings is None:
+        return 1
     if OUT.exists():
         shutil.rmtree(OUT)
     skipped: dict[str, set[str]] = {}
@@ -56,9 +76,12 @@ def main() -> int:
         dest = OUT / rel
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(filled)
-    for script in ("nas.sh", "merge_config.py"):
+    for script in ("host.sh", "merge_config.py"):
         shutil.copy2(SCRIPTS / script, OUT / script)
-    print(f"rendered into {OUT.relative_to(ROOT)}/")
+    host_type, juniper_dir = settings
+    (OUT / "host.env").write_text(
+        f"HOST_TYPE={host_type}\nJUNIPER_DIR={shlex.quote(juniper_dir)}\n")
+    print(f"rendered for {host_type} into {OUT.relative_to(ROOT)}/")
     for name, missing in skipped.items():
         print(f"  skipped {name}: no value for {', '.join(sorted(missing))}")
     return 0

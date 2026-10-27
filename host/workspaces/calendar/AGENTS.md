@@ -15,7 +15,7 @@ I can read all calendars. I write ONLY to the calendar named "Agent".
 
 ## Creating or changing events
 - From the user directly (Calendar topic): show the parsed event
-  (title, date, start–end Europe/Berlin, place) and ask "Create? (yes/no)". Create only after "yes".
+  (title, date, start–end {{TIMEZONE}}, place) and ask "Create? (yes/no)". Create only after "yes".
 - Changes (update-event): only for events in the Agent calendar, and only after the user
   confirms the exact change ("Move <title> to <new time>? (yes/no)").
 - Events in any other calendar: never change them. Tell the user to edit them in the Calendar app.

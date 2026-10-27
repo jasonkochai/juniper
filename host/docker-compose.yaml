@@ -1,5 +1,5 @@
-# /volume1/docker/openclaw/docker-compose.yaml
-# Always run from /volume1/docker/openclaw with: sudo docker compose -p openclaw-agents ...
+# $JUNIPER_DIR/docker-compose.yaml (e.g. /volume1/docker/openclaw on a UGREEN NAS)
+# Always run from $JUNIPER_DIR with: docker compose -p openclaw-agents ... (with sudo on a server)
 # After any change: up -d, never restart (restart does not re-read .env or mounts).
 services:
   openclaw-gateway:
@@ -16,7 +16,7 @@ services:
       OPENCLAW_WORKSPACE_DIR: /home/node/.openclaw/workspace
       OPENCLAW_GATEWAY_PORT: "18789"
       OPENCLAW_DISABLE_BONJOUR: "1"
-      TZ: Europe/Berlin
+      TZ: {{TIMEZONE}}
     volumes:
       - ./config:/home/node/.openclaw
       - ./workspace:/home/node/.openclaw/workspace
@@ -27,16 +27,16 @@ services:
       - ./workspace-comments:/home/node/.openclaw/workspace-comments
       - ./auth-secrets:/home/node/.config/openclaw
       - ./imap-mcp:/home/node/.imap-mcp                                  # Phase 3: encrypted IMAP account file
-      - ./obsidian-assistant:/home/node/.openclaw/workspace/obsidian     # Phase 4: vault/Assistant/ only
-      # NEVER: /volume1, photo/backup shares, /var/run/docker.sock
+      - "${OBSIDIAN_ASSISTANT_DIR:-./obsidian-assistant}:/home/node/.openclaw/workspace/obsidian"   # Phase 4: vault/Assistant/ only
+      # NEVER: a whole disk or share, your home folder, photo/backup folders, /var/run/docker.sock
     cap_drop: [ALL]
     security_opt:
       - no-new-privileges:true
-    mem_limit: 3g
-    memswap_limit: 3g
+    mem_limit: ${GATEWAY_MEM_LIMIT:-3g}
+    memswap_limit: ${GATEWAY_MEM_LIMIT:-3g}
     pids_limit: 256
     ports:
-      - "127.0.0.1:18789:18789"     # localhost only; UGOS userspace Tailscale forwards 100.x:18789 here. Never 0.0.0.0 or a 100.x IP
+      - "127.0.0.1:18789:18789"     # localhost only; Tailscale forwards to it (host.sh expose). Never 0.0.0.0 or a 100.x IP
     init: true
     restart: unless-stopped
     command: ["node", "dist/index.js", "gateway", "--bind", "lan", "--port", "18789"]
@@ -64,7 +64,7 @@ services:
       OPENCLAW_CONFIG_DIR: /home/node/.openclaw
       OPENCLAW_WORKSPACE_DIR: /home/node/.openclaw/workspace
       OPENCLAW_GATEWAY_PORT: "18789"
-      TZ: Europe/Berlin
+      TZ: {{TIMEZONE}}
     volumes:
       - ./config:/home/node/.openclaw
       - ./workspace:/home/node/.openclaw/workspace
@@ -82,19 +82,19 @@ services:
     init: true
     entrypoint: ["node", "dist/index.js"]
 
-  syncthing:                   # Phase 4 (Obsidian option A); start it with: up -d syncthing
+  syncthing:                   # Phase 4 on a server (not needed for a local install); start it with: up -d syncthing
     image: syncthing/syncthing:2     # pin a version you've checked
     container_name: syncthing
     hostname: nas-syncthing
     environment: [PUID=1000, PGID=1000]
     volumes:
       - ./syncthing:/var/syncthing
-      - ./obsidian-assistant:/var/syncthing/Assistant     # the ONLY vault folder on the NAS
+      - "${OBSIDIAN_ASSISTANT_DIR:-./obsidian-assistant}:/var/syncthing/Assistant"   # the ONLY vault folder on the host
     cap_drop: [ALL]
     cap_add: [CHOWN, SETUID, SETGID]   # image drops to PUID/PGID at start
     security_opt: ["no-new-privileges:true"]
     mem_limit: 256m
     ports:
-      - "127.0.0.1:8384:8384"          # web GUI, reached via http://NAS_TAILSCALE_IP:8384 from the Mac
-      - "127.0.0.1:22000:22000/tcp"    # sync protocol, reached via userspace Tailscale forwarding
+      - "127.0.0.1:8384:8384"          # web GUI, reached over Tailscale (host.sh expose syncthing)
+      - "127.0.0.1:22000:22000/tcp"    # sync protocol, reached over Tailscale
     restart: unless-stopped
