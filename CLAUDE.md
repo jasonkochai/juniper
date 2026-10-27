@@ -1,49 +1,71 @@
 # Juniper: instructions for Claude Code
 
-This repo sets up Juniper, a multi-agent OpenClaw assistant, on a UGREEN NAS (UGOS, Docker, userspace Tailscale). Your job is to take the user from wherever they are to a working, locked-down system by following [docs/setup.md](docs/setup.md) phase by phase. The user wants you to do the work, not hand them a guide: run every step you can yourself, and give them only what needs a human.
+This repo sets up Juniper, a multi-agent OpenClaw assistant, in Docker on a host the user picks: a UGREEN NAS, any always-on Linux box (Raspberry Pi, mini PC, server), or their own computer. Your job is to take the user from wherever they are to a working, locked-down system by following [docs/setup.md](docs/setup.md) phase by phase. The user wants you to do the work, not hand them a guide: run every step you can yourself, and give them only what needs a human.
+
+## First: the host
+
+Read [docs/hosts.md](docs/hosts.md). If `juniper.local.env` has no `HOST_TYPE` yet, ask the user what they have and recommend one:
+
+- UGREEN NAS → `ugos`.
+- Any other device that is on all the time → `linux`. Check it's 64-bit with 4 GB+ RAM (`uname -m`, `free -h`), has Docker with compose (`docker compose version`) and Tailscale.
+- Nothing always-on, or just trying it → `local`. Say the trade-offs out loud: agents stop when the computer sleeps, scheduled jobs are missed, and it runs on their daily machine.
+
+Then set `HOST_TYPE`, `JUNIPER_DIR`, `HOST_SSH` (empty for local) and `CONTROL_UI_ORIGIN`.
 
 ## How work is split
 
-| Who | What |
-| --- | --- |
-| You (Mac) | Edit templates, fill `juniper.local.env`, `python3 scripts/render.py`, `rsync -a --delete build/nas/ "$NAS_SSH":juniper/`, non-sudo checks over SSH, read `~/juniper-report.txt`, Syncthing on the Mac, explain the next step |
-| User on the NAS | Commands that need `sudo`, pasted into their own SSH session, almost always `sudo bash ~/juniper/nas.sh <command>`. `sudo` asks for a password you must never see |
-| User elsewhere | Accounts, spend caps, BotFather, Apple app passwords, Tailscale ACLs, Telegram tests, typing secrets into `.env` with `sudo nano` |
+| Host type | Host commands | You can run |
+| --- | --- | --- |
+| `local` | `bash build/host/host.sh <command>`, no `sudo` | everything, including the host steps, yourself |
+| `linux`, `ugos` | `sudo bash ~/juniper/host.sh <command>` in the user's own SSH session; `sudo` asks for a password you must never see | render, `rsync -a --delete build/host/ "$HOST_SSH":juniper/`, non-sudo checks over SSH, reading `~/juniper-report.txt` |
 
-Give the user one short block of NAS commands at a time, say what each should print, and wait for the result (or for `nas.sh check`) before moving on.
+Always the user's: accounts, spend caps, BotFather, Apple app passwords, Tailscale ACLs, Telegram tests, and typing secrets into `.env`.
+
+On a server, give the user one short block of host commands at a time, say what each should print, and wait for the result (or for `host.sh check`) before moving on.
 
 ## Hard rules
 
-- **Secrets never pass through you.** Don't read `.env`, don't ask the user to paste a key, token or password, and never run or request `openclaw mcp show` output (it prints resolved secrets). `juniper.local.env` holds IDs only, never secrets.
-- **Never weaken the security model.** No `docker.sock`, no mounts outside `/volume1/docker/openclaw`, no port on `0.0.0.0` or a `100.x` IP, no `tools.codeMode` other than `false`, no `exec` or `group:runtime` for any agent, no `openclaw security audit --fix`, no ClawHub skills, no unpinned images or MCP servers. Don't suggest passwordless sudo or adding the user to the `docker` group.
+- **Secrets never pass through you.** Don't read `.env` (not even on a local install), don't ask the user to paste a key, token or password, and never run or request `openclaw mcp show` output (it prints resolved secrets). Let the user edit `.env` in their own editor. `juniper.local.env` holds IDs only, never secrets.
+- **Never weaken the security model.** No `docker.sock`, no mounts outside `$JUNIPER_DIR` (except the vault's `Assistant/` folder on a local install), no port on `0.0.0.0` or a `100.x` IP, no `tools.codeMode` other than `false`, no `exec` or `group:runtime` for any agent, no `openclaw security audit --fix`, no ClawHub skills, no unpinned images or MCP servers. Don't suggest passwordless sudo or adding the user to the `docker` group.
 - **Never run `openclaw mcp tools <server>`.** It edits the tool filter; `--clear` brings back delete tools.
-- **Change agent behaviour in this repo,** in `nas/workspaces/<agent>/AGENTS.md`, then render, rsync and `nas.sh workspace <agent>`. Never through chat with the agents.
-- **Templates stay strict JSON** (no comments, no trailing commas). `{{NAME}}` placeholders are filled by `render.py` from `juniper.local.env`; `${NAME}` placeholders are resolved by OpenClaw from `.env` at runtime and must stay as they are.
+- **Change agent behaviour in this repo,** in `host/workspaces/<agent>/AGENTS.md`, then render, copy and `host.sh workspace <agent>`. Never through chat with the agents.
+- **Templates stay strict JSON** (no comments, no trailing commas). `{{NAME}}` placeholders are filled by `render.py` from `juniper.local.env`; `${NAME}` placeholders are resolved by OpenClaw or compose from `.env` at runtime and must stay as they are.
 - Every `curl` gets `-m 5` or more. Compose always gets `-p openclaw-agents`. After compose or `.env` changes, `up -d`, never `restart`.
 - Never commit `juniper.local.env` or `build/`.
 
+## Personalise for a new user
+
+The templates carry the author's defaults. For anyone else, before Phase 1:
+
+- `host/workspaces/shared/USER.md`: rewrite it with the user (who they are, languages, interests, busy times).
+- `TIMEZONE` in `juniper.local.env`.
+- Events: the feeds in `host/workspaces/events/AGENTS.md` and `host/cron/jobs.sh` are Berlin Luma calendars. Find the user's city feeds (Luma city/calendar ICS, Meetup group iCal) and replace them in both files, and the city name.
+- News feeds: in `host/workspaces/news/AGENTS.md` and `host/cron/jobs.sh`.
+- An agent they don't want: skip its `host.sh agent` and `cron` steps, and remove it from the later phase configs (its `agents.entries` block, its topic in `channels.telegram.groups`, and its name in `tools.agentToAgent.allow`). Keep other agents' `deny` entries for its MCP server; they do no harm.
+- Mail and calendar are iCloud. Another provider needs a different MCP server with the same limits (pinned, `toolFilter`, no delete or send).
+
 ## Starting a session
 
-1. If `juniper.local.env` is missing, copy `juniper.env.example` and fill what the user knows. Ask for the SSH host alias first.
-2. Check reachability: `ssh "$NAS_SSH" true`. If it fails, Tailscale on the Mac is probably off; ask the user to turn it on.
-3. Find out where the system stands: ask the user to run `sudo bash ~/juniper/nas.sh check` (after a first rsync), then read it with `ssh "$NAS_SSH" cat juniper-report.txt`. Agents, cron jobs and MCP servers in the report tell you which phase is done.
-4. Continue at the first unfinished step in [docs/setup.md](docs/setup.md). Each phase ends with `nas.sh check`, a Telegram tool check per new agent, and the audit target (0 critical, only the three known warnings).
+1. If `juniper.local.env` is missing, copy `juniper.env.example`, settle the host (above), fill what the user knows.
+2. Server: check `ssh "$HOST_SSH" true`. If it fails, Tailscale on this computer is probably off.
+3. Find out where the system stands: run (local) or ask the user to run (server) `host.sh check`, then read `~/juniper-report.txt` on the host. Agents, cron jobs and MCP servers in it show which phase is done.
+4. Continue at the first unfinished step in [docs/setup.md](docs/setup.md). Each phase ends with `host.sh check`, a Telegram tool check per new agent, and the audit target (0 critical, only the three known warnings).
 
 ## Files
 
-| Path | Lands on the NAS as |
+| Path | Lands on the host as |
 | --- | --- |
-| `nas/docker-compose.yaml` | `/volume1/docker/openclaw/docker-compose.yaml` (via `nas.sh compose`) |
-| `nas/env.example` | `/volume1/docker/openclaw/.env`, created once by `nas.sh env`, then edited by the user |
-| `nas/config/openclaw.phaseN.json` | merged into `config/openclaw.json` by `nas.sh config N` (OpenClaw's own `plugins`, `skills`, `meta`, `wizard`, `talk` are kept) |
-| `nas/workspaces/<agent>/` | `workspace/` (main, root-owned) or `workspace-<agent>/` (via `nas.sh workspace` / `nas.sh agent`) |
-| `nas/cron/jobs.sh` | the scheduled jobs per agent (via `nas.sh cron <agent>`) |
-| `scripts/nas.sh` | the NAS helper; `sudo bash ~/juniper/nas.sh` with no argument lists its commands |
-| `scripts/merge_config.py` | used by `nas.sh config` |
-| `scripts/render.py` | Mac side: `nas/` + `juniper.local.env` → `build/nas/` |
+| `host/docker-compose.yaml` | `$JUNIPER_DIR/docker-compose.yaml` (via `host.sh compose`) |
+| `host/env.example` | `$JUNIPER_DIR/.env`, created once by `host.sh env`, then edited by the user |
+| `host/config/openclaw.phaseN.json` | merged into `config/openclaw.json` by `host.sh config N` (OpenClaw's own `plugins`, `skills`, `meta`, `wizard`, `talk` are kept) |
+| `host/workspaces/<agent>/` | `workspace/` (main, read-only) or `workspace-<agent>/` (via `host.sh workspace` / `host.sh agent`) |
+| `host/cron/jobs.sh` | the scheduled jobs per agent (via `host.sh cron <agent>`) |
+| `scripts/host.sh` | the host helper; with no argument it lists its commands. Reads `host.env` (written by `render.py`) for `HOST_TYPE` and `JUNIPER_DIR` |
+| `scripts/merge_config.py` | used by `host.sh config` |
+| `scripts/render.py` | `host/` + `juniper.local.env` → `build/host/` |
 
 `docs/security.md` has the panic button and the full checklist; `docs/troubleshooting.md` has every error seen on the real install.
 
-## State of the live system
+## State of the author's live system
 
-Phases 1 to 3 (hub, Calendar, Events, Email) are tested on the real NAS. Phase 4 (News, voice, images, Obsidian via Syncthing) is being set up. Phase 5 (Comments via Composio) is planned, not live.
+UGREEN NAS (`ugos`). Phases 1 to 3 (hub, Calendar, Events, Email) are tested there. Phase 4 (News, voice, images, Obsidian via Syncthing) is being set up. Phase 5 (Comments via Composio) is planned, not live. The `linux` and `local` paths use the same configs but haven't been run end to end yet.

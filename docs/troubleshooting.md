@@ -1,6 +1,6 @@
 # Troubleshooting
 
-Errors and fixes from the real install (UGOS, OpenClaw 2026.10.5) and the OpenClaw docs. Step numbers match [setup.md](setup.md).
+Errors and fixes from the real install (UGREEN NAS, OpenClaw 2026.10.5) and the OpenClaw docs. Commands are written for a server; drop `sudo` on a local install. Step numbers match [setup.md](setup.md).
 
 ## 1.1 Inspect and back up the current container
 
@@ -19,8 +19,8 @@ Never paste keys into Telegram or into an agent chat. If a key leaks, go to [Pan
 
 * **`sudo docker port openclaw-gateway` prints nothing.** The port binding uses an address the host doesn't have, e.g. a `100.x` IP. Change it to `127.0.0.1:18789:18789`.
 * **Telegram answers "This agent's workspace is missing on the gateway host…"**, or a command fails with "No such file or directory". Usually a `config/workspace-<name>` mount point was deleted. Check it with `sudo docker exec openclaw-gateway ls /home/node/.openclaw/workspace-<name>`, then recreate the mounts: `sudo docker compose -p openclaw-agents up -d --force-recreate openclaw-gateway`.
-* **"container name already in use".** You ran compose without `-p openclaw-agents`, or from another folder. Run it again from `/volume1/docker/openclaw` with the project name.
-* **The Mac can't reach `100.x:18789`, but `127.0.0.1` works on the NAS.** Check that the UGOS Tailscale container is running and that your Tailscale access controls allow `tcp:18789` (step 1.5).
+* **"container name already in use".** You ran compose without `-p openclaw-agents`, or from another folder. Run it again from `$JUNIPER_DIR` with the project name.
+* **The Mac can't reach `100.x:18789`, but `127.0.0.1` works on the host.** UGOS: check that the Tailscale app is running. Linux: run `host.sh expose` and check `tailscale serve status`. Both: your Tailscale access controls must allow `tcp:18789` (step 1.5). Don't test the `100.x` address from the host itself; on UGOS that always fails.
 * **Exit code 78, or a restart loop.** In `sudo docker ps` a restart loop shows as an uptime that keeps resetting ("Up 36 seconds" → "Up 2 seconds"), not as "stuck starting". Read the reason:
 
   ```
@@ -29,11 +29,11 @@ Never paste keys into Telegram or into an agent chat. If a key leaks, go to [Pan
 
   "Gateway start blocked: existing config is missing gateway.mode" means `gateway.mode: "local"` is missing (step 1.6).
 * **"Unknown key" or the gateway refuses to start.** Stop the gateway, run `openclaw-offline doctor --fix`, then `sudo docker compose -p openclaw-agents up -d openclaw-gateway`.
-* **The UGOS Docker UI rewrote your compose file.** Some users report this. This repo holds the real copy: re-run `nas.sh compose`.
+* **(UGOS) The Docker UI rewrote your compose file.** Some users report this. This repo holds the real copy: re-run `host.sh compose`.
 
 ## 1.5 Reach the Control UI only through Tailscale
 
-The docs call plain HTTP over a tailnet IP "a downgraded transport". The traffic is still encrypted by WireGuard between your devices. The UI works this way on UGOS without `tailscale serve`.
+The docs call plain HTTP over a tailnet IP "a downgraded transport". The traffic is still encrypted by WireGuard between your devices. On UGOS it works without `tailscale serve`; on Linux, `host.sh expose` forwards raw TCP, so the URL stays `http://<tailscale ip>:18789`.
 
 ## 1.6 openclaw.json
 
@@ -82,7 +82,7 @@ Jobs that never fire: the CLI needs a running gateway, and scheduled runs need `
 
 ## 3.1 iCloud Mail via IMAP
 
-* **"No accounts configured".** The `imap-mcp` mount is still commented out, or the container wasn't recreated. Check that `docker-compose.yaml` has the `./imap-mcp` line (`nas.sh compose` installs it), then `sudo docker exec openclaw-gateway ls -la /home/node/.imap-mcp` must show `accounts.json` and `.key`.
+* **"No accounts configured".** The `imap-mcp` mount is still commented out, or the container wasn't recreated. Check that `docker-compose.yaml` has the `./imap-mcp` line (`host.sh compose` installs it), then `sudo docker exec openclaw-gateway ls -la /home/node/.imap-mcp` must show `accounts.json` and `.key`.
 * **"has IMAP credentials marked as environment-managed, but this variable was not set".** `ICLOUD_MAIL_APP_PASSWORD` is missing from `.env`, or the gateway wasn't restarted with `up -d`.
 * **The test connection fails with an authentication error.** A wrong address (use the `@icloud.com` address from the iPhone's Mail settings) or a wrong or revoked mail app password.
 
@@ -101,7 +101,15 @@ Files named `*.sync-conflict-*.md` appear when the same note changed in two plac
 ## The helper scripts
 
 * **`render.py` says "skipped … no value for X".** That file needs `X` in `juniper.local.env`. Files for later phases are skipped until their values exist; that's expected.
-* **`nas.sh config N` says "no …/openclaw.phaseN.json".** It wasn't rendered (missing values) or wasn't copied. Re-render and rsync.
-* **`nas.sh config N` says "gateway not live".** It prints the log lines and the restore command for the backup it just made. Run that command, then `sudo docker compose -p openclaw-agents up -d openclaw-gateway`.
-* **`nas.sh agent <id>` fails with a shared-state error.** Stop the gateway, run `openclaw-offline agents add <id> --workspace '~/.openclaw/workspace-<id>' --model <model> --non-interactive`, start it again, then `nas.sh workspace <id>`.
-* **`nas.sh ids` says "Conflict".** Something else polls the bot (the gateway or an old container). Stop it, or read the IDs from `openclaw logs --follow` instead.
+* **`host.sh config N` says "no …/openclaw.phaseN.json".** It wasn't rendered (missing values) or wasn't copied. Re-render and rsync.
+* **`host.sh config N` says "gateway not live".** It prints the log lines and the restore command for the backup it just made. Run that command, then `sudo docker compose -p openclaw-agents up -d openclaw-gateway`.
+* **`host.sh agent <id>` fails with a shared-state error.** Stop the gateway, run `openclaw-offline agents add <id> --workspace '~/.openclaw/workspace-<id>' --model <model> --non-interactive`, start it again, then `host.sh workspace <id>`.
+* **`host.sh ids` says "Conflict".** Something else polls the bot (the gateway or an old container). Stop it, or read the IDs from `openclaw logs --follow` instead.
+* **`host.sh` says "run with sudo" or "a local install runs without sudo".** `HOST_TYPE` in `juniper.local.env` decides: servers need `sudo`, `local` must run as you. Fix the value, re-render.
+
+## Host types
+
+* **`exec format error` on a Raspberry Pi.** The OS is 32-bit. Install Raspberry Pi OS (64-bit).
+* **`tailscale serve` fails or isn't found.** Install Tailscale on the host and log in with `sudo tailscale up` first. `sudo tailscale serve reset` clears all forwards.
+* **Local install, Linux or WSL: `EACCES` in the logs.** Your user isn't uid 1000, so the container can't write the folders. Use `HOST_TYPE=linux` with `sudo`, which sets the owners.
+* **Local install: scheduled jobs didn't run.** The computer was asleep. That's the main reason to move to an always-on host ([hosts.md](hosts.md#local-this-computer)).
