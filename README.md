@@ -2,11 +2,12 @@
 
 # ⚡ Juniper
 
-**A private team of AI agents that lives in one Telegram group, on hardware you own.**<br>
-Calendar, email, events, news and notes, each handled by its own small agent,<br>
-always on, fully self-hosted, and never acting without your "yes".
+**The private alternative to Claude Duet, OpenAI's dots and Grok Bot.**<br>
+Always-on AI agents for your calendar, email, events, news and notes,<br>
+running on hardware you own, fully local with your own LLM if you want,<br>
+and never acting without your "yes".
 
-[Quick start](#-quick-start) · [Why this exists](#-why-this-exists) · [What happens when you run it](#-what-happens-when-you-run-it) · [Security](#-security)
+[Quick start](#-quick-start) · [Why I built it](#-why-i-built-it) · [What happens when you run it](#-what-happens-when-you-run-it) · [Security](#-security)
 
 </div>
 
@@ -33,7 +34,7 @@ Claude Code downloads the repo, asks you a few questions and builds the system w
 
 ## Contents
 
-- [Why this exists](#-why-this-exists)
+- [Why I built it](#-why-i-built-it)
 - [What you get](#-what-you-get)
 - [How it works](#-how-it-works)
 - [What happens when you run it](#-what-happens-when-you-run-it)
@@ -47,17 +48,18 @@ Claude Code downloads the repo, asks you a few questions and builds the system w
 - [FAQ](#-faq)
 - [Credits and license](#-credits-and-license)
 
-## 💡 Why this exists
+## 💡 Why I built it
 
-Juniper is a **showcase of what you can build with [OpenClaw](https://docs.openclaw.ai)**: several agents with their own jobs, tools and permissions, talking to you through one chat.
+Always-on AI agents are arriving everywhere: Anthropic's Claude Duet, OpenAI's dots, xAI's Grok Bot. They work in the background, send you a morning overview and check in when something needs you. They also run on someone else's servers, with your mail, calendar and notes.
 
-To be honest about it: it isn't perfect, and it isn't life-changing. There are easier options that do much the same out of the box, like OpenAI's dots, xAI's Grok Bot and Anthropic's new Claude Duet.
+I wanted the same kind of assistant, **fully private**. So I built Juniper on [OpenClaw](https://docs.openclaw.ai):
 
-Where Juniper makes sense is when you want **always-on agents that stay private**:
-
-- **Self-hosted.** It runs on your home server, a Raspberry Pi, a VPS or your own computer. Your mail summaries, calendar and notes stay on your devices.
-- **Fully local if you want.** Swap the cloud models for a local LLM and nothing leaves your network except Telegram messages. I've run it that way too.
+- **Same idea.** Agents that work on their own schedule, brief you every morning, sort your inbox, find events and ask before they act.
+- **Your hardware.** It runs on your home server, a Raspberry Pi, a VPS or your own computer. Your data stays on your devices.
+- **Fully local if you want.** Swap the cloud models for your own LLM and no prompt, email or note ever reaches a model provider. I've run it that way myself.
 - **You decide what each agent may touch.** Every permission is a line in a config file you can read.
+
+It's also a showcase of what OpenClaw can do: several agents with their own jobs, tools and permissions behind one chat. The big products are easier to start with; Juniper is for when privacy matters more than convenience.
 
 ## ✨ What you get
 
@@ -156,7 +158,7 @@ Full comparison and requirements: [docs/hosts.md](docs/hosts.md).
 
 ## 🔐 Fully local with your own models
 
-Juniper doesn't need a cloud model. Point OpenClaw at a local model server and every agent runs on your own hardware: your prompts, emails and notes never reach a model provider. Telegram still carries the chat itself.
+This is the point of Juniper: always-on agents without a cloud model. I've run it this way myself. Point OpenClaw at a local model server and every agent runs on your own hardware: your prompts, emails and notes never reach a model provider. Telegram still carries the chat itself.
 
 Use a model that handles tool calls well and has a large enough context window; small models are slower and less careful than Haiku. How to set it up: [docs/local-llm.md](docs/local-llm.md).
 
@@ -215,7 +217,7 @@ docs/
 No. A Raspberry Pi, a VPS or any always-on Linux machine works, and you can try it on your own computer first.
 
 **Why not just use Claude Duet, OpenAI's dots or Grok Bot?**
-If they cover what you need, they're the easier choice. Juniper is for when you want it self-hosted, private and fully under your control, or want to see how a multi-agent setup works inside.
+If you're happy for your mail, calendar and notes to live on their servers, they're the easier choice. Juniper gives you the same kind of always-on agents on your own hardware, and fully local with your own model if you want.
 
 **Can Claude Code see my passwords?**
 No. You type every secret into the secrets file yourself, and its rules forbid reading it.
