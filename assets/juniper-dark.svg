@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="840" height="320" viewBox="0 0 840 320" role="img" aria-labelledby="title">
-<title id="title">Juniper wiring: five Telegram topics (news, events, email, calendar, notes) reach one OpenClaw gateway in Docker on my home server. Email and calendar agents read through read-only MCP servers, notes through an Obsidian folder.</title>
+<title id="title">Juniper wiring: Telegram topics for news, events, email and calendar, plus notes through the main assistant, reach one OpenClaw gateway in Docker on my home server. Email goes through a read-only IMAP MCP server, calendar through a CalDAV MCP server without delete, notes through one Obsidian folder.</title>
 <style>:root { --paper: #17375e; --paper-2: #122d4f; --paper-3: #0d2340; --ink: #efe9e4; --ink-2: #d9d1cb; --muted: #93a6bd; --accent: #a5908b; --rule: rgba(239, 233, 228, 0.55); --rule-2: rgba(239, 233, 228, 0.18); --grid: rgba(239, 233, 228, 0.07); --grid-2: rgba(239, 233, 228, 0.14); }
 .paper { fill: var(--paper); }
 .paper-2 { fill: var(--paper-2); }

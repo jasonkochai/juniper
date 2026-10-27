@@ -20,11 +20,18 @@ dc() { docker compose -p openclaw-agents "$@"; }
 oc() { docker exec openclaw-gateway node dist/index.js "$@"; }
 # a local install runs as you; Docker Desktop maps file ownership itself
 own() { [ "$HOST_TYPE" = "local" ] || chown "$@"; }
+# hide anything token-shaped before it reaches a terminal or the report
+redact() {
+    sed -E -e 's/([Aa]uthorization"?: *"?(Basic|Bearer|basic|bearer) )[^ "]+/\1[redacted]/g' \
+        -e 's/bot[0-9]{6,}:[A-Za-z0-9_-]{30,}/bot[redacted]/g' \
+        -e 's/(sk-ant-|AIza)[A-Za-z0-9_-]{10,}/\1[redacted]/g' \
+        -e 's/[0-9a-f]{64}/[redacted]/g'
+}
 
 wait_live() {
     local i
     for i in $(seq 1 24); do
-        if curl -m 5 -s http://127.0.0.1:18789/healthz | grep -q '"status":"live"'; then
+        if curl -m 5 -s http://127.0.0.1:18789/healthz | grep '"status":"live"' > /dev/null; then
             echo "healthz: live"
             return 0
         fi
@@ -35,7 +42,7 @@ wait_live() {
 
 config_errors() {
     docker logs --tail 60 openclaw-gateway 2>&1 \
-        | grep -iE "blocked|invalid|unknown key|error" || echo "no config errors in the log"
+        | grep -iE "blocked|invalid|unknown key|error" | redact || echo "no config errors in the log"
 }
 
 cmd_backup() {
@@ -44,7 +51,7 @@ cmd_backup() {
     local parent name out
     parent="$(dirname "$OC_DIR")"
     name="$(basename "$OC_DIR")"
-    out="$parent/$name-backup-$(date +%F).tgz"
+    out="$parent/$name-backup-$(stamp).tgz"
     tar czf "$out" -C "$parent" "$name"
     chmod 600 "$out"
     ls -l "$out"
@@ -72,8 +79,11 @@ cmd_env() {
     if [ -e .env ]; then
         echo ".env already exists, left as it is"
     else
+        local token
+        token="$(openssl rand -hex 32)"
+        [ "${#token}" -eq 64 ] || die "openssl rand failed"
         (umask 077 && cp "$HERE/env.example" .env)
-        sed -i.tmp "s/^OPENCLAW_GATEWAY_TOKEN=.*/OPENCLAW_GATEWAY_TOKEN=$(openssl rand -hex 32)/" .env
+        sed -i.tmp "s/^OPENCLAW_GATEWAY_TOKEN=.*/OPENCLAW_GATEWAY_TOKEN=$token/" .env
         rm -f .env.tmp
         chmod 600 .env
         echo "created .env with a fresh gateway token"
@@ -89,7 +99,8 @@ cmd_compose() {
         cp -p docker-compose.yaml "docker-compose.yaml.bak-$(stamp)"
     fi
     cp "$HERE/docker-compose.yaml" docker-compose.yaml
-    dc config --quiet && echo "compose file valid"
+    dc config --quiet || die "docker-compose.yaml is invalid (see above)"
+    echo "compose file valid"
     if [ ! -e config/openclaw.json ]; then
         echo "no config/openclaw.json yet: run 'host.sh config 1' to start the gateway"
         return
@@ -116,7 +127,7 @@ cmd_expose() {
         linux)
             command -v tailscale > /dev/null || die "install Tailscale first: https://tailscale.com/download/linux"
             for p in $ports; do
-                tailscale serve --bg --tcp="$p" "tcp://localhost:$p"
+                tailscale serve --bg --tcp="$p" "tcp://127.0.0.1:$p"
             done
             tailscale serve status ;;
     esac
@@ -125,6 +136,7 @@ cmd_expose() {
 cmd_config() {
     # step 1.6 workflow: stop, back up, merge, check, start, check again
     local phase="${1:-}" mode="${2:-}"
+    [ -n "$phase" ] || die "usage: host.sh config <1-4> [--dry-run]"
     local tpl="$HERE/config/openclaw.phase$phase.json"
     [ -f "$tpl" ] || die "no $tpl (render it first; it is skipped while values are missing)"
     python3 -m json.tool "$tpl" > /dev/null || die "template is not valid JSON"
@@ -225,7 +237,7 @@ cmd_cron() {
 cmd_ids() {
     # step 1.9: user, group and topic IDs from recent bot updates; the token is never printed
     local token script
-    token="$(grep '^TELEGRAM_BOT_TOKEN=' "$OC_DIR/.env" | cut -d= -f2-)"
+    token="$(grep '^TELEGRAM_BOT_TOKEN=' "$OC_DIR/.env" | cut -d= -f2- | tr -d "\"' \r" || true)"
     [ -n "$token" ] || die "TELEGRAM_BOT_TOKEN is empty in .env"
     read -r -d '' script <<'PY' || true
 import json, sys
@@ -275,7 +287,7 @@ cmd_check() {
         echo "== audit";    oc security audit --deep
         echo "== log (last hour, errors and code mode)"
         docker logs --since 1h openclaw-gateway 2>&1 | grep -iE "error|blocked|invalid|code-mode" | tail -30
-    } 2>&1 | sed -E 's/([Aa]uthorization: *(Basic|Bearer|basic|bearer) )[^ ]+/\1[redacted]/g' > "$report"
+    } 2>&1 | redact > "$report"
     own "$owner" "$report"
     chmod 600 "$report"
     echo "report written to $report"

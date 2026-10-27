@@ -9,7 +9,7 @@ Errors and fixes from the real install (UGREEN home server, OpenClaw 2026.10.5) 
 
 ## 1.2 Create the folder layout and permissions
 
-The docs' fix for `EACCES` errors after first start is `sudo chown -R 1000:1000 config workspace` ([compose operations](https://docs.openclaw.ai/install/docker/compose-operations)).
+The docs' fix for `EACCES` errors after first start is `sudo chown -R 1000:1000 config workspace` ([compose operations](https://docs.openclaw.ai/install/docker/compose-operations)). That also gives the hub's instruction files back to uid 1000, so run `host.sh workspace main` afterwards.
 
 ## 1.3 Write the `.env` secrets file and the `openclaw` aliases
 
@@ -78,7 +78,7 @@ Jobs that never fire: the CLI needs a running gateway, and scheduled runs need `
 ## 2.6 Events agent
 
 * **Feeds get cut off.** From step 4.1, `tools.web.fetch.maxChars` is 10,000 for all agents, which is roughly 10–15 events per ICS feed. The Discover feed holds about 50. Prefer the specific Berlin AI calendars over Discover, or raise `maxChars` and accept that big runs may fall back to Haiku.
-* **Residual risk.** The Events agent reads untrusted feeds and can message Calendar. The handoff now only happens after you reply "registered N", and Calendar only accepts handoffs that contain an event URL and posts every creation in 📅, so a malicious event description alone can't get a calendar entry created unnoticed.
+* **Residual risk.** The Events agent reads untrusted feeds and can message Calendar. The handoff now only happens after you reply "registered N", and Calendar only accepts handoffs that contain "CONFIRMED BY USER" and an event URL. A manipulated Events agent could still fake that line; the worst case is an extra entry in the Agent calendar, never in your other calendars.
 
 ## 3.1 iCloud Mail via IMAP
 

@@ -16,12 +16,14 @@ Conventions (tested on a UGREEN DXP4800 Pro with OpenClaw 2026.10.5):
 - `openclaw …` is an alias for `docker exec -it openclaw-gateway node dist/index.js` (with `sudo` on a server). `openclaw-offline …` runs the CLI container while the gateway is stopped; the two must never run together because they share SQLite state.
 - Every `curl` gets a timeout (`-m 5`).
 - After each phase: `host.sh check`, then Claude reads `~/juniper-report.txt` on the host.
+- In each new terminal on the host, run `. ~/juniper/host.env` once (local: `. build/host/host.env`); it sets `$JUNIPER_DIR` for the commands below.
+- On a server `.env` belongs to root (mode 600): read or edit it with `sudo`.
 
 ## Phase 0: prepare (Claude)
 
 1. Agree on the host type with the user ([hosts.md](hosts.md)) and check its requirements (64-bit, 4 GB RAM, Docker with compose, Tailscale for servers).
 2. Copy `juniper.env.example` to `juniper.local.env` and fill in what's known. Topic IDs and the calendar URL come later; rendering skips any file that still misses a value and says which.
-3. Server only: check `ssh "$HOST_SSH" true` (Tailscale on).
+3. Server only: Claude can't type an SSH password, so the user sets up key login once: `ssh-keygen -t ed25519` (if there's no key yet), `ssh-copy-id <user>@<host tailscale ip>`, and a `Host <alias>` block in `~/.ssh/config`. Then check `ssh -o BatchMode=yes "$HOST_SSH" true` (Tailscale on).
 4. Render, and on a server copy the bundle:
 
    ```sh
@@ -30,7 +32,7 @@ Conventions (tested on a UGREEN DXP4800 Pro with OpenClaw 2026.10.5):
    rsync -a --delete build/host/ "$HOST_SSH":juniper/        # servers only
    ```
 
-   Re-run after every change to `juniper.local.env` or `host/`. If the server has no `rsync`, use `ssh "$HOST_SSH" rm -rf juniper && scp -r build/host "$HOST_SSH":juniper`.
+   Re-run after every change to `juniper.local.env` or `host/`. Claude Code's shell doesn't keep variables between commands, so source `juniper.local.env` in the same command that uses `$HOST_SSH`. If the server has no `rsync`, use `ssh "$HOST_SSH" rm -rf juniper && scp -r build/host "$HOST_SSH":juniper`.
 
 ## Phase 1: foundation and security
 
@@ -60,7 +62,7 @@ host.sh compose
 - `env` creates `.env` (mode 600) with a random 64-hex gateway token and lists the keys still holding example values. It never overwrites an existing `.env`.
 - `compose` installs the hardened `docker-compose.yaml`: uid 1000, `cap_drop: [ALL]`, `no-new-privileges`, 3 GB memory, port on `127.0.0.1` only. It starts nothing until `config/openclaw.json` exists.
 
-**You (servers):** add the aliases to `~/.profile` on the host and remove any old `openclaw()` function from `~/.bashrc`:
+**You (servers):** add the aliases to `~/.profile` on the host (`~/.zshrc` on a Mac) and remove any old `openclaw()` function from `~/.bashrc`:
 
 ```sh
 alias openclaw='sudo docker exec -it openclaw-gateway node dist/index.js'
@@ -76,10 +78,10 @@ host.sh expose
 ```
 
 - `ugos`: nothing to do; UGOS's userspace Tailscale forwards `<tailscale ip>:18789` to `127.0.0.1:18789`.
-- `linux`: sets up `tailscale serve --bg --tcp=18789 tcp://localhost:18789`, tailnet only, persistent.
+- `linux`: sets up `tailscale serve --bg --tcp=18789 tcp://127.0.0.1:18789`, tailnet only, persistent.
 - `local`: nothing to do; open `http://localhost:18789`.
 
-**You (servers):** in the Tailscale admin console → *Access controls*, tag the host first (or you lock yourself out), then replace allow-all:
+**You (servers):** in the Tailscale admin console → *Access controls*, first save only the `tagOwners` line, then tag the host (machine → *Edit ACL tags* → `tag:juniper`), and only then replace allow-all with the grants. In the other order you lock yourself out.
 
 ```json
 {
@@ -91,8 +93,6 @@ host.sh expose
 ```
 
 8384 and 22000 are Syncthing (Phase 4). Add whatever else you reach on that box (for example the UGOS web UI port). Check against the [grants reference](https://tailscale.com/kb/1324/grants).
-
-Open `CONTROL_UI_ORIGIN` in a browser and paste the gateway token (`grep OPENCLAW_GATEWAY_TOKEN "$JUNIPER_DIR/.env"` on the host) into *Settings*. Never paste it into a chat.
 
 ### 1.7 Model keys and spend caps (You)
 
@@ -115,6 +115,8 @@ Set the cap **before** the key goes in:
 4. Send one message in General and one in each topic, then run `host.sh ids`. It asks the Bot API for recent updates and prints only sender ID, chat ID (`-100…`), topic ID and the first words of each message. It only works while nothing else polls the bot (before 1.6, or with the gateway stopped), otherwise Telegram answers 409. With the gateway running, use `openclaw logs --follow` instead.
 5. **Claude:** write the IDs into `juniper.local.env`, re-render (and rsync).
 
+1.6 comes after 1.9 on purpose: the Phase 1 config needs the group and topic IDs.
+
 ### 1.6 Base config (Host)
 
 ```sh
@@ -130,13 +132,15 @@ What the Phase 1 config does: `messaging` profile, **`codeMode: false`**, deny `
 
 Verify (You, in the DM): `/status` shows Haiku. *"Run `ls /`"* → no tool for that. A second Telegram account gets no answer. BotFather → `/setjoingroups` → Disable.
 
+Now the gateway runs: open `CONTROL_UI_ORIGIN` in a browser and paste the gateway token (`sudo grep OPENCLAW_GATEWAY_TOKEN "$JUNIPER_DIR/.env"` on the host, no `sudo` locally) into *Settings*. Never paste it into a chat.
+
 ### 1.10 Hub instructions (Host)
 
 ```sh
 host.sh workspace main
 ```
 
-Installs `AGENTS.md`, `SOUL.md`, `USER.md` read-only for the container (root-owned on a server, `chmod 444` locally), so a prompt injection can't rewrite the rules. Memory files stay writable. Verify: `/new`, *"What are your approval rules?"*, then *"Install the weather skill from ClawHub"* → it refuses.
+Installs `AGENTS.md`, `SOUL.md`, `USER.md` read-only for the container (root-owned on a server, `chmod 444` locally), so the agent's own file tools can't edit them. Memory files stay writable. The specialists' instruction files (installed with `host.sh agent`) belong to uid 1000; only their rules keep them unchanged. Verify: `/new`, *"What are your approval rules?"*, then *"Install the weather skill from ClawHub"* → it refuses.
 
 ### 1.11 Audit, 1.12 panic drill
 
@@ -158,7 +162,9 @@ The calendar and mail parts use Apple (iCloud). With another provider, swap the 
 2. `.env`: `ICLOUD_USER` (your **primary** Apple ID), `ICLOUD_CAL_APP_PASSWORD`, `ICLOUD_MAIL_APP_PASSWORD`.
 3. In Calendar, create an **iCloud** calendar named exactly **Agent**. Every event the agent creates goes there.
 
-### 2.2 Find the Agent calendar URL (Host)
+### 2.2 Find the Agent calendar URL (You, on the host)
+
+Both blocks read your app password from `.env`, so you run them, not Claude. On a server open a root shell first: `. ~/juniper/host.env; sudo env JUNIPER_DIR="$JUNIPER_DIR" bash`, and type `exit` afterwards. On a local install use your own terminal.
 
 Login test first (`207` = OK, `401` = wrong Apple ID or password):
 
@@ -250,16 +256,16 @@ Window 2 (`read -s` keeps both out of the history; use the `@icloud.com` address
 read -s -p "Wizard token: " T; echo
 read -s -p "Mail app password: " P; echo
 EMAIL="name@icloud.com"
-curl -s -H "Authorization: Bearer $T" -H "Content-Type: application/json" \
+curl -m 10 -s -H "Authorization: Bearer $T" -H "Content-Type: application/json" \
   -d "{\"email\":\"$EMAIL\",\"password\":\"$P\",\"host\":\"imap.mail.me.com\",\"port\":993,\"tls\":true}" \
   http://127.0.0.1:3000/api/test-connection; echo
-curl -s -H "Authorization: Bearer $T" -H "Content-Type: application/json" \
+curl -m 10 -s -H "Authorization: Bearer $T" -H "Content-Type: application/json" \
   -d "{\"name\":\"icloud\",\"email\":\"$EMAIL\",\"host\":\"imap.mail.me.com\",\"port\":993,\"tls\":true,\"imapPasswordFromEnv\":true}" \
   http://127.0.0.1:3000/api/accounts; echo
 unset T P
 ```
 
-Both must return `"success":true`. `imapPasswordFromEnv` keeps the password out of `accounts.json`; no SMTP is ever configured. Ctrl+C the wizard, then `ls -la "$JUNIPER_DIR/imap-mcp"` shows `accounts.json` and `.key`. The `imap-mcp` mount is already in the compose file.
+Both must return `"success":true`. `imapPasswordFromEnv` keeps the password out of `accounts.json`; no SMTP is ever configured. Ctrl+C the wizard, then `sudo ls -la "$JUNIPER_DIR/imap-mcp"` (no `sudo` locally) shows `accounts.json` and `.key`. The `imap-mcp` mount is already in the compose file.
 
 ### 3.2–3.3 Email agent (Host)
 
