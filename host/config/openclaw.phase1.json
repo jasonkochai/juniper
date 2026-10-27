@@ -58,7 +58,7 @@
       },
       "contextPruning": {
         "mode": "cache-ttl",
-        "ttl": "1h"
+        "ttl": "5m"
       },
       "heartbeat": {
         "every": "0m"

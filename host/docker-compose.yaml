@@ -81,7 +81,7 @@ services:
     entrypoint: ["node", "dist/index.js"]
 
   syncthing:                   # Phase 4 on a server (not needed for a local install); start it with: up -d syncthing
-    image: syncthing/syncthing:2     # pin a version you've checked
+    image: syncthing/syncthing:2.1.7     # pinned; upgrade on purpose
     container_name: syncthing
     hostname: juniper-syncthing
     environment: [PUID=1000, PGID=1000]

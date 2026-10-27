@@ -12,6 +12,10 @@ Read [docs/hosts.md](docs/hosts.md). If `juniper.local.env` has no `HOST_TYPE` y
 
 Then set `HOST_TYPE`, `JUNIPER_DIR`, `HOST_SSH` (empty for local) and `CONTROL_UI_ORIGIN`.
 
+## Then: the models
+
+Ask whether they want the default cloud models (Claude Haiku plus Gemini Flash-Lite, cheap, best quality) or a fully local setup with their own model server. For local, follow [docs/local-llm.md](docs/local-llm.md): apply its changes to the phase configs in their clone before Phase 1, run `host.sh agent` with `JUNIPER_AGENT_MODEL`, and skip the Anthropic and Google accounts in step 1.7. Voice and image generation are off in that mode.
+
 ## How work is split
 
 | Host type | Host commands | You can run |
@@ -47,7 +51,7 @@ The templates carry the author's defaults. For anyone else, before Phase 1:
 ## Starting a session
 
 1. If `juniper.local.env` is missing, copy `juniper.env.example`, settle the host (above), fill what the user knows.
-2. Server: check `ssh "$HOST_SSH" true`. If it fails, Tailscale on this computer is probably off.
+2. Server: check `ssh -o BatchMode=yes "$HOST_SSH" true`. You can't type an SSH password, so if it asks for one, have the user set up key login (docs/setup.md, Phase 0). If it times out, Tailscale on this computer is probably off. Your shell doesn't keep variables between commands: source `juniper.local.env` in the same command that uses `$HOST_SSH`.
 3. Find out where the system stands: run (local) or ask the user to run (server) `host.sh check`, then read `~/juniper-report.txt` on the host. Agents, cron jobs and MCP servers in it show which phase is done.
 4. Continue at the first unfinished step in [docs/setup.md](docs/setup.md). Each phase ends with `host.sh check`, a Telegram tool check per new agent, and the audit target (0 critical, only the three known warnings).
 
@@ -68,4 +72,4 @@ The templates carry the author's defaults. For anyone else, before Phase 1:
 
 ## State of the author's live system
 
-UGREEN home server (`ugos`). Phases 1 to 3 (hub, Calendar, Events, Email) are tested there. Phase 4 (News, voice, images, Obsidian via Syncthing) is being set up. The `linux` and `local` paths use the same configs but haven't been run end to end yet.
+UGREEN home server (`ugos`). Phases 1 to 3 (hub, Calendar, Events, Email) run there. Phase 4 is optional and experimental: the author hasn't set up News or the Obsidian notes on their own system. The author has also run Juniper fully locally with a local LLM ([docs/local-llm.md](docs/local-llm.md)). The `linux` and `local` paths use the same configs but haven't been run end to end yet.

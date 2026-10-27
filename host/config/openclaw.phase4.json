@@ -58,7 +58,7 @@
       },
       "contextPruning": {
         "mode": "cache-ttl",
-        "ttl": "1h"
+        "ttl": "5m"
       },
       "heartbeat": {
         "every": "0m"
@@ -78,7 +78,8 @@
           "alsoAllow": [
             "read",
             "write",
-            "edit"
+            "edit",
+            "image_generate"
           ],
           "deny": [
             "apply_patch",

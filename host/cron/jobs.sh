@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Add the scheduled jobs for one agent: host.sh cron <agent>
-# Every --message is complete on its own: isolated and --light-context runs do not
+# Every --message is complete on its own: --light-context runs do not
 # load the full AGENTS.md (guide step 2.5).
 set -euo pipefail
 
@@ -8,7 +8,7 @@ oc() { docker exec openclaw-gateway node dist/index.js "$@"; }
 
 add_job() {
     local name="$1" jobs; shift
-    jobs="$(oc cron list)"
+    jobs="$(oc cron list --all)"
     if grep -q -- "$name" <<< "$jobs"; then
         echo "skip: $name already exists (edit it with: openclaw cron edit <id> --message ...)"
         return

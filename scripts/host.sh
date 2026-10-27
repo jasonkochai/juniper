@@ -180,9 +180,10 @@ cmd_config() {
 }
 
 model_for() {
+    # JUNIPER_AGENT_MODEL overrides the cloud defaults, e.g. ollama/<model> (docs/local-llm.md)
     case "$1" in
-        calendar|email) echo "anthropic/claude-haiku-5-5" ;;
-        events|news) echo "google/gemini-3.5-flash-lite" ;;
+        calendar|email) echo "${JUNIPER_AGENT_MODEL:-anthropic/claude-haiku-5-5}" ;;
+        events|news) echo "${JUNIPER_AGENT_MODEL:-google/gemini-3.5-flash-lite}" ;;
         *) die "unknown agent: $1 (one of: $AGENTS)" ;;
     esac
 }
@@ -208,10 +209,18 @@ cmd_workspace() {
         return
     fi
     local dir="workspace-$id"
-    rm -f "$dir/BOOTSTRAP.md"
+    rm -f "$dir/BOOTSTRAP.md" "$dir/AGENTS.md" "$dir/IDENTITY.md" "$dir/SOUL.md" "$dir/USER.md"
     cp "$src/$id/AGENTS.md" "$src/$id/IDENTITY.md" "$src/shared/SOUL.md" "$src/shared/USER.md" "$dir/"
-    chmod 644 "$dir/AGENTS.md" "$dir/IDENTITY.md" "$dir/SOUL.md" "$dir/USER.md"
     own -R 1000:1000 "$dir"
+    # the rules stay read-only for the container; IDENTITY.md stays writable like the hub's
+    for f in AGENTS.md SOUL.md USER.md; do
+        if [ "$HOST_TYPE" = "local" ]; then
+            chmod 444 "$dir/$f"
+        else
+            chown root:root "$dir/$f"
+            chmod 644 "$dir/$f"
+        fi
+    done
     ls -ln "$dir"
 }
 
