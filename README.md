@@ -25,12 +25,13 @@ Open [Claude Code](https://claude.com/claude-code) in any folder and paste this:
 ```text
 Clone https://github.com/jasonkochai/juniper and set up Juniper for me.
 Read its CLAUDE.md first and follow it: help me choose where it runs,
-then guide me through the setup phase by phase. Do every step you can
-yourself, tell me exactly what I need to do, and never ask me for a
-password, key or token.
+which models, and which chat app, agents and tools I want, then set
+up exactly that, phase by phase. Do every step you can yourself, tell
+me exactly what I need to do, and never ask me for a password, key or
+token.
 ```
 
-Claude Code downloads the repo, asks you a few questions and builds the system with you. Read on if you want to know what it will do first.
+Claude Code downloads the repo, asks what you want and builds that with you. It doesn't copy my setup: you pick the chat app (Telegram, WhatsApp, Signal, Discord, Slack …), the agents, your mail and calendar provider, the search engine and any extra tools, and it installs and configures only those. My choices are offered as the tested default. Read on if you want to know what it will do first.
 
 ## Contents
 
@@ -145,13 +146,14 @@ One Telegram bot, one private group, one topic per agent. You talk to the main a
 
 ## 🎬 What happens when you run it
 
-This is the default path when you paste the prompt above. Claude Code does everything on your computer; you're only needed for accounts, passwords and, on a server, `sudo`.
+This is the path when you paste the prompt above. Phases 1–4 describe my default tools (Telegram, iCloud, Brave, Obsidian); if you pick others, Claude Code swaps the matching steps. It does everything on your computer; you're only needed for accounts, passwords and, on a server, `sudo`.
 
 **0. Get ready** · *about 10 minutes*
 1. Claude Code clones the repo and reads `CLAUDE.md`, its rulebook for this setup.
 2. It asks where Juniper should run and recommends one: your home server, a Raspberry Pi, a VPS, or this computer for trying it out. On a server it checks 64-bit, 4 GB RAM, Docker and Tailscale.
-3. It asks about you (name, time zone, city, interests), which agents you want, and whether to use cloud models or a local one, and adapts the configs to that.
-4. It creates `juniper.local.env` with your settings (IDs only, never secrets) and renders the config files.
+3. It asks which setup and models you want, then which tools: chat app, agents (Calendar, Events, Email, News, Notes), mail and calendar provider, web search and extras like Home Assistant or Notion. It also asks about you (name, languages, time zone, city, interests).
+4. It shows you the plan as a short table and waits for your "yes". Then it adapts the configs to exactly that: unused agents are removed, other providers swapped in, extra tools added with their own narrow permissions.
+5. It creates `juniper.local.env` with your settings (IDs only, never secrets) and renders the config files.
 
 **1. Foundation** · *about an hour, mostly accounts*
 1. **You** create the accounts: a Telegram bot via BotFather, an Anthropic key with a $10 cap, a Gemini key (free tier).
@@ -251,6 +253,9 @@ The mail and calendar connectors would need swapping for ones that speak your pr
 
 **I'm not in Berlin.**
 Claude Code replaces the event feeds and time zone with yours during setup.
+
+**Do I have to use your tools?**
+No. Claude Code asks which chat app, agents, providers and extras you want and sets up only those. My setup is just the tested default.
 
 **Can I leave out an agent?**
 Yes. Tell Claude Code which ones you want; it skips the rest.

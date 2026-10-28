@@ -24,9 +24,10 @@ Conventions (tested on a UGREEN DXP4800 Pro with OpenClaw 2026.10.5, and the `lo
 ## Phase 0: prepare (Claude)
 
 1. Agree on the host type with the user ([hosts.md](hosts.md)) and check its requirements (64-bit, 4 GB RAM, Docker with compose, Tailscale for servers).
-2. Copy `juniper.env.example` to `juniper.local.env` and fill in what's known. Topic IDs and the calendar URL come later; rendering skips any file that still misses a value and says which.
-3. Server only: Claude can't type an SSH password, so the user sets up key login once: `ssh-keygen -t ed25519` (if there's no key yet), `ssh-copy-id <user>@<host tailscale ip>`, and a `Host <alias>` block in `~/.ssh/config`. Then check `ssh -o BatchMode=yes "$HOST_SSH" true` (Tailscale on).
-4. Render, and on a server copy the bundle:
+2. Agree on the tools ([CLAUDE.md](../CLAUDE.md), "Next: let them choose their tools"): chat app, agents, mail and calendar provider, web search, extras, and the user's profile. The steps below describe the tested default (Telegram, iCloud, Brave); for other choices, adapt the templates first.
+3. Copy `juniper.env.example` to `juniper.local.env` and fill in what's known. Topic IDs and the calendar URL come later; rendering skips any file that still misses a value and says which.
+4. Server only: Claude can't type an SSH password, so the user sets up key login once: `ssh-keygen -t ed25519` (if there's no key yet), `ssh-copy-id <user>@<host tailscale ip>`, and a `Host <alias>` block in `~/.ssh/config`. Then check `ssh -o BatchMode=yes "$HOST_SSH" true` (Tailscale on).
+5. Render, and on a server copy the bundle:
 
    ```sh
    set -a; . ./juniper.local.env; set +a
