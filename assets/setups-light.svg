@@ -92,5 +92,5 @@
 <circle cx="299" cy="254" r="5" fill="#1a7f37"/>
 <text x="310" y="259" font-size="13" font-weight="500" fill="#59636e" text-anchor="start">Always on: yes</text>
 </g>
-<text x="600.0" y="616" font-size="13" font-weight="500" fill="#59636e" text-anchor="middle">You chat through Telegram in every setup; it carries the messages, nothing needs an open port.</text>
+<text x="600.0" y="616" font-size="13" font-weight="500" fill="#59636e" text-anchor="middle">You chat through your chat app in every setup; with Telegram, nothing needs an open port.</text>
 </svg>
