@@ -58,7 +58,7 @@
       },
       "contextPruning": {
         "mode": "cache-ttl",
-        "ttl": "1h"
+        "ttl": "5m"
       },
       "heartbeat": {
         "every": "0m"
@@ -251,9 +251,6 @@
             },
             "{{NEWS_TOPIC_ID}}": {
               "requireMention": true
-            },
-            "{{COMMENTS_TOPIC_ID}}": {
-              "requireMention": true
             }
           }
         }
@@ -290,6 +287,7 @@
           "CALDAV_USERNAME": "${ICLOUD_USER}",
           "CALDAV_PASSWORD": "${ICLOUD_CAL_APP_PASSWORD}"
         },
+        "connectionTimeoutMs": 120000,
         "requestTimeoutMs": 20000,
         "toolFilter": {
           "include": [
@@ -311,6 +309,7 @@
           "IMAP_MCP_ENABLED_TOOLS": "imap_search_emails,imap_get_email,imap_get_latest_emails",
           "IMAP_MCP_ACCOUNT_ICLOUD_IMAP_PASSWORD": "${ICLOUD_MAIL_APP_PASSWORD}"
         },
+        "connectionTimeoutMs": 120000,
         "requestTimeoutMs": 30000,
         "toolFilter": {
           "include": [
