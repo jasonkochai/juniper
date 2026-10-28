@@ -14,7 +14,7 @@ What stays outside your network even then:
 | --- | --- | --- | --- |
 | **One device** | your Mac or gaming PC (`HOST_TYPE=local`) | the same machine | `http://host.docker.internal:11434` |
 | **Two devices** | a Raspberry Pi or home server, always on (`linux` or `ugos`) | an old gaming PC or a MacBook in your home network | `http://<that machine's LAN IP>:11434` |
-| **Hybrid** | your home server | cloud models for most agents, the local model for the ones you pick | both, see "Mixing cloud and local" below |
+| **Hybrid** | your home server | cloud models, optionally the local model for agents you pick | both, see "Mixing cloud and local" below |
 
 Two devices is the sweet spot for a private setup: the small box stays on and keeps the schedule, the big machine only has to be awake when an agent thinks. Give the model machine a fixed LAN address in your router.
 
