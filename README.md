@@ -36,13 +36,13 @@ Claude Code downloads the repo, asks you a few questions and builds the system w
 
 - [Why I built it](#-why-i-built-it)
 - [Ways to run it](#-ways-to-run-it)
+- [Connect more tools](#-connect-more-tools)
+- [What it costs](#-what-it-costs)
 - [What you get](#-what-you-get)
 - [How it works](#-how-it-works)
 - [What happens when you run it](#-what-happens-when-you-run-it)
 - [What you need](#-what-you-need)
 - [Fully local with your own models](#-fully-local-with-your-own-models)
-- [Connect more tools](#-connect-more-tools)
-- [What it costs](#-what-it-costs)
 - [Security](#-security)
 - [Set it up by hand](#-set-it-up-by-hand)
 - [Repo layout](#-repo-layout)
@@ -79,6 +79,34 @@ Where OpenClaw runs and where the model runs are two separate choices. Mix them 
 | **Fully cloud** | a VPS | cloud APIs | no hardware at home |
 
 I started fully local and now run the hybrid setup on my UGREEN home server. OpenClaw needs anything 64-bit with Docker and 4 GB of RAM; a local model needs a GPU or Apple Silicon. Details: [docs/hosts.md](docs/hosts.md) and [docs/local-llm.md](docs/local-llm.md).
+
+## 🔌 Connect more tools
+
+Juniper uses Telegram, Apple Mail and Calendar, Brave search and Obsidian because that's what I use. OpenClaw connects to much more:
+
+| | |
+| --- | --- |
+| 💬 **Chat apps** | WhatsApp, Signal, Discord, Slack, iMessage, Matrix, Microsoft Teams, Google Chat, SMS, voice calls |
+| 🧠 **Models** | Anthropic, OpenAI, Google, xAI, Mistral, DeepSeek, Groq, OpenRouter, Bedrock; locally Ollama, LM Studio, llama.cpp, vLLM, Apple on-device |
+| 🔎 **Web search** | Brave, Tavily, Exa, Perplexity, Firecrawl, DuckDuckGo, self-hosted SearXNG |
+| 🎨 **Media** | image and video generation (incl. local ComfyUI), speech from ElevenLabs, Deepgram, Azure |
+| 📱 **Devices** | iOS and Android nodes with camera, location and voice; macOS, Windows and Linux companions |
+| 🧩 **Anything with an MCP server** | Home Assistant, Notion, GitHub, Todoist, your own scripts, or hundreds of SaaS apps through Composio |
+
+Each one goes to a single agent with a narrow tool list, the same way Juniper's mail and calendar do. How: [docs/integrations.md](docs/integrations.md).
+
+## 💶 What it costs
+
+| | Typical | Hard cap |
+| --- | --- | --- |
+| Anthropic (Haiku) | a few dollars a month | $10 a month, set in the console |
+| Google (Gemini Flash-Lite) | free tier | $8 if you enable billing for images |
+| Brave Search | free credit | the free credit |
+| Images | about $0.07 each, only when you ask | — |
+| Voice memos | about $0.001 a minute | — |
+| Fully local | $0 in API fees | — |
+
+The hardware is whatever you already have, a Raspberry Pi, or a small VPS.
 
 ## ✨ What you get
 
@@ -167,34 +195,6 @@ On a **server**, you paste one `sudo` command per step into your own terminal; C
 This is the point of Juniper: always-on agents without a cloud model. That's how I started. Point OpenClaw at a local model server and every agent runs on your own hardware: your prompts, emails and notes never reach a model provider. Telegram still carries the chat itself.
 
 Use a model that handles tool calls well and has a large enough context window; small models are slower and less careful than Haiku. Models are set per agent, so a hybrid works too: keep Email on your local model and let News use the cloud. How to set it up: [docs/local-llm.md](docs/local-llm.md).
-
-## 🔌 Connect more tools
-
-Juniper uses Telegram, Apple Mail and Calendar, Brave search and Obsidian because that's what I use. OpenClaw connects to much more:
-
-| | |
-| --- | --- |
-| 💬 **Chat apps** | WhatsApp, Signal, Discord, Slack, iMessage, Matrix, Microsoft Teams, Google Chat, SMS, voice calls |
-| 🧠 **Models** | Anthropic, OpenAI, Google, xAI, Mistral, DeepSeek, Groq, OpenRouter, Bedrock; locally Ollama, LM Studio, llama.cpp, vLLM, Apple on-device |
-| 🔎 **Web search** | Brave, Tavily, Exa, Perplexity, Firecrawl, DuckDuckGo, self-hosted SearXNG |
-| 🎨 **Media** | image and video generation (incl. local ComfyUI), speech from ElevenLabs, Deepgram, Azure |
-| 📱 **Devices** | iOS and Android nodes with camera, location and voice; macOS, Windows and Linux companions |
-| 🧩 **Anything with an MCP server** | Home Assistant, Notion, GitHub, Todoist, your own scripts, or hundreds of SaaS apps through Composio |
-
-Each one goes to a single agent with a narrow tool list, the same way Juniper's mail and calendar do. How: [docs/integrations.md](docs/integrations.md).
-
-## 💶 What it costs
-
-| | Typical | Hard cap |
-| --- | --- | --- |
-| Anthropic (Haiku) | a few dollars a month | $10 a month, set in the console |
-| Google (Gemini Flash-Lite) | free tier | $8 if you enable billing for images |
-| Brave Search | free credit | the free credit |
-| Images | about $0.07 each, only when you ask | — |
-| Voice memos | about $0.001 a minute | — |
-| Fully local | $0 in API fees | — |
-
-The hardware is whatever you already have, a Raspberry Pi, or a small VPS.
 
 ## 🔒 Security
 
