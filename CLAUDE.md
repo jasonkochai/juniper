@@ -16,6 +16,31 @@ Then set `HOST_TYPE`, `JUNIPER_DIR`, `HOST_SSH` (empty for local) and `CONTROL_U
 
 Ask which setup they want (README "Ways to run it"): fully local on one device, fully local on two devices (always-on box plus a model machine on the LAN), hybrid (cloud models, optionally some agents local), or fully cloud (VPS plus cloud models). The default is cloud models (Claude Haiku plus Gemini Flash-Lite, cheap, best quality). For local or mixed, follow [docs/local-llm.md](docs/local-llm.md): apply its changes to the phase configs in their clone before Phase 1, run `host.sh agent` with `JUNIPER_AGENT_MODEL`, and skip the Anthropic and Google accounts in step 1.7. Voice and image generation are off in that mode.
 
+## Next: let them choose their tools
+
+The templates are the author's own setup (Telegram, iCloud Mail and Calendar, Brave, Obsidian, Berlin event feeds). Don't install that by default for someone else. Before Phase 1, ask what they want, one short question at a time, and offer the author's choice as the tested default:
+
+| Ask | Options | Author's default |
+| --- | --- | --- |
+| Chat app | Telegram, or another OpenClaw channel: WhatsApp, Signal, Discord, Slack, Matrix, Microsoft Teams, iMessage … ([integrations.md](docs/integrations.md)) | Telegram, one forum topic per agent |
+| Agents | Calendar, Events, Email, News, Notes (Obsidian). The hub is always there. | all five |
+| Mail and calendar | iCloud, or another provider (Gmail, Outlook, Fastmail …) | iCloud |
+| Web search (News, Events) | Brave, Tavily, DuckDuckGo (no key), self-hosted SearXNG (private) | Brave |
+| Extra tools | anything from [integrations.md](docs/integrations.md): Home Assistant, Notion, GitHub, Todoist, any MCP server | none |
+| About them | name, languages, time zone, city, interests, busy times | the author's profile |
+
+Then show the plan back as one short table (host, models, chat app, agents, providers, extras) and get a "yes" before you change anything. Make the changes in their clone, before Phase 1:
+
+- **Profile:** rewrite `host/workspaces/shared/USER.md` with them, and set `TIMEZONE` in `juniper.local.env`.
+- **Events:** replace the Berlin Luma feeds in `host/workspaces/events/AGENTS.md` and `host/cron/jobs.sh` with feeds for their city (Luma city or calendar ICS, Meetup group iCal), and the city name. **News:** adjust the feeds in `host/workspaces/news/AGENTS.md` and `jobs.sh` to their interests.
+- **An agent they don't want:** skip its `host.sh agent` and `cron` steps, and remove it from the phase configs (its `agents.entries` block, its topic in `channels.telegram.groups`, its name in `tools.agentToAgent.allow`). Other agents' `deny` entries for its MCP server can stay.
+- **Another web search:** change `tools.web.search.provider` in the phase 4 config and install that provider's plugin pinned (`openclaw plugins install npm:@openclaw/<plugin>@<gateway version> --pin`, if it isn't bundled). Put its key in `.env` (the user types it).
+- **Another mail or calendar provider:** swap the MCP server in the phase configs for one that speaks their provider, with the same limits: pinned version, `toolFilter.include` with read tools (plus create and update for the calendar), no delete or send. Keep the server names or update every `deny` entry that names them.
+- **Another chat app:** follow the OpenClaw docs for that channel (`openclaw plugins install @openclaw/<channel>`), keep the owner-only allowlist (`dmPolicy` and `groupPolicy` set to `allowlist`, only their ID), and route each agent to its own group, channel or thread where the platform has them. This repo only tests Telegram, so verify each step with the tool check.
+- **An extra tool:** follow [docs/integrations.md](docs/integrations.md): one owning agent, everyone else denies it. If it needs its own agent, add one: `host/workspaces/<id>/AGENTS.md` and `IDENTITY.md`; the id in `AGENTS` and `model_for` in `scripts/host.sh`; a workspace mount plus the three read-only rule-file mounts in `host/docker-compose.yaml`; an `agents.entries.<id>` block (profile `full`, explicit `allow`, `deny` with `exec`, `process`, `group:runtime` and every other agent's MCP servers), its topic and its server in the others' `deny` lists in the phase configs; a `jobs.sh` function if it runs on a schedule; a topic ID key in `juniper.env.example`.
+
+Re-render after the changes and run `config N --dry-run` before each real `config N`.
+
 ## How work is split
 
 | Host type | Host commands | You can run |
@@ -37,21 +62,9 @@ On a server, give the user one short block of host commands at a time, say what 
 - Every `curl` gets `-m 5` or more. Compose always gets `-p openclaw-agents`. After compose or `.env` changes, `up -d`, never `restart`.
 - Never commit `juniper.local.env` or `build/`.
 
-## Personalise for a new user
-
-The templates carry the author's defaults. For anyone else, before Phase 1:
-
-- `host/workspaces/shared/USER.md`: rewrite it with the user (who they are, languages, interests, busy times).
-- `TIMEZONE` in `juniper.local.env`.
-- Events: the feeds in `host/workspaces/events/AGENTS.md` and `host/cron/jobs.sh` are Berlin Luma calendars. Find the user's city feeds (Luma city/calendar ICS, Meetup group iCal) and replace them in both files, and the city name.
-- News feeds: in `host/workspaces/news/AGENTS.md` and `host/cron/jobs.sh`.
-- More tools (another chat app, search provider, Home Assistant, any MCP server): follow [docs/integrations.md](docs/integrations.md), one owning agent, everyone else denies it.
-- An agent they don't want: skip its `host.sh agent` and `cron` steps, and remove it from the later phase configs (its `agents.entries` block, its topic in `channels.telegram.groups`, and its name in `tools.agentToAgent.allow`). Keep other agents' `deny` entries for its MCP server; they do no harm.
-- Mail and calendar are iCloud. Another provider needs a different MCP server with the same limits (pinned, `toolFilter`, no delete or send).
-
 ## Starting a session
 
-1. If `juniper.local.env` is missing, copy `juniper.env.example`, settle the host (above), fill what the user knows.
+1. If `juniper.local.env` is missing, copy `juniper.env.example`, settle the host, models and tools (above), fill what the user knows. If the system already runs, ask whether they want to add or change tools before continuing.
 2. Server: check `ssh -o BatchMode=yes "$HOST_SSH" true`. You can't type an SSH password, so if it asks for one, have the user set up key login (docs/setup.md, Phase 0). If it times out, Tailscale on this computer is probably off. Your shell doesn't keep variables between commands: source `juniper.local.env` in the same command that uses `$HOST_SSH`.
 3. Find out where the system stands: run (local) or ask the user to run (server) `host.sh check`, then read `~/juniper-report.txt` on the host. Agents, cron jobs and MCP servers in it show which phase is done.
 4. Continue at the first unfinished step in [docs/setup.md](docs/setup.md). Each phase ends with `host.sh check`, a Telegram tool check per new agent, and the audit target (0 critical, only the three known warnings).
