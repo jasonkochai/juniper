@@ -8,6 +8,16 @@ What stays outside your network even then:
 - **Events and News** still fetch event feeds and web pages, and News uses Brave Search. Leave them out if you want no outside requests at all.
 - **iCloud Mail and Calendar** are still Apple's servers; the local model only reads what the connectors fetch.
 
+## Pick a layout
+
+| Layout | OpenClaw runs on | The model runs on | `baseUrl` |
+| --- | --- | --- | --- |
+| **One device** | your Mac or gaming PC (`HOST_TYPE=local`) | the same machine | `http://host.docker.internal:11434` |
+| **Two devices** | a Raspberry Pi or home server, always on (`linux` or `ugos`) | an old gaming PC or a MacBook in your home network | `http://<that machine's LAN IP>:11434` |
+| **Hybrid** | your home server | cloud models for most agents, the local model for the ones you pick | both, see "Mixing cloud and local" below |
+
+Two devices is the sweet spot for a private setup: the small box stays on and keeps the schedule, the big machine only has to be awake when an agent thinks. Give the model machine a fixed LAN address in your router.
+
 Everything below follows the OpenClaw 2026.10.5 docs: [Ollama provider](https://docs.openclaw.ai/providers/ollama), [local models](https://docs.openclaw.ai/gateway/local-models), [Docker networking](https://docs.openclaw.ai/install/docker/networking-and-storage), [audio](https://docs.openclaw.ai/nodes/audio).
 
 ## 1. Pick a model and a machine
@@ -113,6 +123,16 @@ openclaw models list --agent main --provider ollama
 `JUNIPER_AGENT_MODEL` makes `host.sh agent` register the local model instead of the cloud default; `config N` sets the full model block afterwards either way.
 
 Then run the usual tool check in each topic (setup.md, Phase 2). Local models use OpenClaw's structured Tool Search, so `tool_search`, `tool_describe` and `tool_call` appear, as in the cloud setup.
+
+## Mixing cloud and local (hybrid)
+
+Models are set per agent, so you can keep the sensitive agents local and let the rest use the cloud:
+
+- Keep the cloud defaults, add the `models` block from step 3, and add `"ollama/*"` to `agents.defaults.modelPolicy.allow` next to the cloud models.
+- Set only the agents you choose to `{ "primary": "ollama/<model>", "fallbacks": [] }`. Email is the obvious one: your inbox never reaches a model provider.
+- Keep voice and image generation on the cloud, or turn them off as below.
+
+A cloud model in an agent's `fallbacks` keeps it working when the model machine is off, but that run then goes to the cloud. Leave `fallbacks` empty for agents that must stay local.
 
 ## Voice and images
 
