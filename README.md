@@ -11,7 +11,9 @@ Built on OpenClaw. Nothing happens without your "yes".
 
 </div>
 
-**What I learned:** Docker and container hardening · Linux users and permissions · network security and least privilege · multi-agent system design · LLM tool permissions and prompt-injection defence · MCP integrations · local LLMs · email and calendar protocols (IMAP, CalDAV) · secrets management · API cost control
+**What I learned:** Docker and container hardening · Linux users and permissions · network security and least privilege · multi-agent system design · LLM tool permissions and prompt-injection defence · MCP integrations · local LLMs · secrets management · LLM cost and token optimisation
+
+**Result:** token-efficient by design. The same agents cost about **$3 a month** in model fees instead of about **$120** with every agent on Claude Sonnet and no prompt caching: **roughly 97% less** ([how](#-what-it-costs)).
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/juniper-dark.svg">
@@ -70,7 +72,7 @@ The same whatever tools you pick:
 - **One container, many agents.** OpenClaw runs in Docker on a machine you control. Each agent has one job and its own instructions, memory, model and tool list.
 - **One chat, only you.** All agents sit behind one chat app, each in its own topic or channel where the app has them. The bot answers only your account, and every reply starts with the agent's emoji.
 - **Narrow connectors.** Mail, calendar and extras connect through pinned MCP servers or plugins, filtered so only the tools an agent needs exist. Each tool belongs to one agent; the others are denied it.
-- **On a schedule.** Agents run their own jobs (morning overview, inbox summaries) and post the result in their topic.
+- **On a schedule.** Agents run their own jobs (morning overview, inbox summary) and post the result in their topic.
 - **Models per agent.** Cloud, local or mixed. My default: Claude Haiku where judgement matters, Gemini Flash-Lite (free tier) for bulk reading, each falling back to the other.
 - **Rules live in this repo.** Agents can't change their own instructions. Details: [Security](#-security).
 
@@ -122,7 +124,14 @@ With my default models and search; other providers cost what they charge.
 | Voice memos | free tier, or about $0.001 a minute when billed | — |
 | Fully local | $0 in API fees | — |
 
-Fully local costs electricity instead of API fees. The hardware is whatever you already have, a Raspberry Pi, or a small VPS. Outside the EEA, Google may use free-tier prompts to improve its products; enable billing, or keep sensitive agents on Haiku or a local model.
+**How it stays cheap:**
+
+- **The cheapest model that does the job.** Haiku costs a twentieth of Sonnet per token; the reading-heavy agents run on Gemini Flash-Lite's free tier.
+- **Prompt caching.** Repeated instructions are read from the cache at a tenth of the price.
+- **Small, fresh runs.** Scheduled jobs start with an empty session, the calendar overview loads a slim context, and the always-on heartbeat is off.
+- **Capped inputs.** At most 30 mails per summary, 10,000 characters per web page and 12 fetches per news run, which also keeps Haiku under its 100K-token price jump.
+
+The comparison is an estimate from my workload model (runs per day and tokens per run for each agent, 4 model calls per run, half the input cached): about $2.70 a month for Juniper's setup, about $118 for the same work on Sonnet without caching. Fully local costs electricity instead of API fees. The hardware is whatever you already have, a Raspberry Pi, or a small VPS. Outside the EEA, Google may use free-tier prompts to improve its products; enable billing, or keep sensitive agents on Haiku or a local model.
 
 ## 🏠 My setup
 
@@ -146,10 +155,9 @@ One Telegram bot, one private group, one topic per agent. I talk to the main ass
 | Time | Where | What arrives |
 | --- | --- | --- |
 | 07:25 | 📅 | today's events and tomorrow morning, with clashes flagged |
-| 07:30 | 📰 | AI digest: video ideas and things worth learning, with links |
-| 08:00 | 📧 | inbox summary since last night, with reply drafts |
+| 07:30 | 📰 | short AI and tech news, with links |
+| 08:00 | 📧 | inbox summary of the last 24 hours, with reply drafts |
 | 12:00 | 🎟️ | up to 5 new events; reply "yes 2" to check one |
-| 18:00 | 📧 | inbox summary since the morning |
 | any time | DM | "Dinner with Alex Friday 7pm" → "Create this event?" → "yes" → it's in your calendar |
 
 ## 🧰 What you need
@@ -190,7 +198,7 @@ This is the path when you paste the prompt above. It does everything on your com
 
 **3. Email** · *about 20 minutes*
 1. **You** connect iCloud Mail once through a small setup wizard on the host.
-2. Email is created with read-only mail access and no internet; the two daily summaries are scheduled.
+2. Email is created with read-only mail access and no internet; the morning summary is scheduled.
 3. You send yourself a fake "ignore your instructions" email and check it gets flagged, not followed.
 
 **4. News, voice, images, notes** *(optional)* · *about 30 minutes*

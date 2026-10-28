@@ -279,7 +279,7 @@ host.sh config 3
 host.sh cron email
 ```
 
-Adds `icloud-mail` (`imap-mcp-server@2.2.0`, `IMAP_MCP_READ_ONLY=true`, three read tools in both `IMAP_MCP_ENABLED_TOOLS` and `toolFilter`). Email gets no web, no messaging, no media; everyone else denies `icloud-mail__*`. Summaries at 08:00 and 18:00 with fixed windows, max 30 mails, no full bodies, codes redacted.
+Adds `icloud-mail` (`imap-mcp-server@2.2.0`, `IMAP_MCP_READ_ONLY=true`, three read tools in both `IMAP_MCP_ENABLED_TOOLS` and `toolFilter`). Email gets no web, no messaging, no media; everyone else denies `icloud-mail__*`. One summary at 08:00 covering the last 24 hours, max 30 mails, no full bodies, codes redacted.
 
 Checks: `openclaw mcp doctor icloud-mail --probe` → ok. 📧: *"Show me my 5 latest emails"* works, *"Delete the newsletter"* → no tool. Turn on the group's **auto-delete** (Telegram isn't end-to-end encrypted).
 
