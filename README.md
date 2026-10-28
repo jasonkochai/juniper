@@ -7,7 +7,7 @@ Always-on AI agents for your calendar, email, events, news and notes,<br>
 running on hardware you own, fully local with your own LLM if you want,<br>
 and never acting without your "yes".
 
-[Quick start](#-quick-start) · [Why I built it](#-why-i-built-it) · [What happens when you run it](#-what-happens-when-you-run-it) · [Security](#-security)
+[Quick start](#-quick-start) · [Why I built it](#-why-i-built-it) · [Ways to run it](#-ways-to-run-it) · [What happens when you run it](#-what-happens-when-you-run-it) · [Security](#-security)
 
 </div>
 
@@ -35,11 +35,11 @@ Claude Code downloads the repo, asks you a few questions and builds the system w
 ## Contents
 
 - [Why I built it](#-why-i-built-it)
+- [Ways to run it](#-ways-to-run-it)
 - [What you get](#-what-you-get)
 - [How it works](#-how-it-works)
 - [What happens when you run it](#-what-happens-when-you-run-it)
 - [What you need](#-what-you-need)
-- [Ways to run it](#-ways-to-run-it)
 - [Fully local with your own models](#-fully-local-with-your-own-models)
 - [Connect more tools](#-connect-more-tools)
 - [What it costs](#-what-it-costs)
@@ -61,6 +61,24 @@ I wanted the same kind of assistant, **fully private**. So I built Juniper on [O
 - **You decide what each agent may touch.** Every permission is a line in a config file you can read.
 
 It's also a showcase of what OpenClaw can do: several agents with their own jobs, tools and permissions behind one chat. My agents and tools are just one example; OpenClaw [connects to much more](#-connect-more-tools). The big products are easier to start with; Juniper is for when privacy matters more than convenience.
+
+## 🧭 Ways to run it
+
+Where OpenClaw runs and where the model runs are two separate choices. Mix them how you like:
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/setups-dark.svg">
+  <img src="assets/setups-light.svg" width="100%" alt="Four ways to run Juniper: fully local on one device; fully local on two devices with a Raspberry Pi and a gaming PC or MacBook; hybrid with a home server and cloud models, which is what I run; fully cloud on a VPS.">
+</picture>
+
+| Setup | OpenClaw runs on | The model runs on | Good for |
+| --- | --- | --- | --- |
+| **Fully local · one device** | your Mac or gaming PC (Docker Desktop) | the same machine (Ollama, LM Studio) | trying it, maximum privacy |
+| **Fully local · two devices** | a Raspberry Pi or home server, always on | an old gaming PC or MacBook in your home network | private and always on, without a GPU in the small box |
+| **Hybrid** · what I run | a home server or Raspberry Pi | cloud APIs (Claude, Gemini), optionally a local model for chosen agents | the best answers per euro, data stays at home |
+| **Fully cloud** | a VPS | cloud APIs | no hardware at home |
+
+I started fully local and now run the hybrid setup on my UGREEN home server. OpenClaw needs anything 64-bit with Docker and 4 GB of RAM; a local model needs a GPU or Apple Silicon. Details: [docs/hosts.md](docs/hosts.md) and [docs/local-llm.md](docs/local-llm.md).
 
 ## ✨ What you get
 
@@ -143,24 +161,6 @@ On a **server**, you paste one `sudo` command per step into your own terminal; C
 - A [Brave Search API](https://brave.com/search/api/) key (News, free credit)
 - [Tailscale](https://tailscale.com) if Juniper runs on a server
 - Obsidian, if you want the notes feature
-
-## 🧭 Ways to run it
-
-Where OpenClaw runs and where the model runs are two separate choices. Mix them how you like:
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/setups-dark.svg">
-  <img src="assets/setups-light.svg" width="100%" alt="Four ways to run Juniper: fully local on one device; fully local on two devices with a Raspberry Pi and a gaming PC or MacBook; hybrid with a home server and cloud models, which is what I run; fully cloud on a VPS.">
-</picture>
-
-| Setup | OpenClaw runs on | The model runs on | Good for |
-| --- | --- | --- | --- |
-| **Fully local · one device** | your Mac or gaming PC (Docker Desktop) | the same machine (Ollama, LM Studio) | trying it, maximum privacy |
-| **Fully local · two devices** | a Raspberry Pi or home server, always on | an old gaming PC or MacBook in your home network | private and always on, without a GPU in the small box |
-| **Hybrid** · what I run | a home server or Raspberry Pi | cloud APIs (Claude, Gemini), optionally a local model for chosen agents | the best answers per euro, data stays at home |
-| **Fully cloud** | a VPS | cloud APIs | no hardware at home |
-
-I started fully local and now run the hybrid setup on my UGREEN home server. OpenClaw needs anything 64-bit with Docker and 4 GB of RAM; a local model needs a GPU or Apple Silicon. Details: [docs/hosts.md](docs/hosts.md) and [docs/local-llm.md](docs/local-llm.md).
 
 ## 🔐 Fully local with your own models
 
