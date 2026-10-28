@@ -14,7 +14,7 @@ Then set `HOST_TYPE`, `JUNIPER_DIR`, `HOST_SSH` (empty for local) and `CONTROL_U
 
 ## Then: the models
 
-Ask whether they want the default cloud models (Claude Haiku plus Gemini Flash-Lite, cheap, best quality) or a fully local setup with their own model server. For local, follow [docs/local-llm.md](docs/local-llm.md): apply its changes to the phase configs in their clone before Phase 1, run `host.sh agent` with `JUNIPER_AGENT_MODEL`, and skip the Anthropic and Google accounts in step 1.7. Voice and image generation are off in that mode.
+Ask which setup they want (README "Ways to run it"): fully local on one device, fully local on two devices (always-on box plus a model machine on the LAN), hybrid (cloud models, optionally some agents local), or fully cloud (VPS plus cloud models). The default is cloud models (Claude Haiku plus Gemini Flash-Lite, cheap, best quality). For local or mixed, follow [docs/local-llm.md](docs/local-llm.md): apply its changes to the phase configs in their clone before Phase 1, run `host.sh agent` with `JUNIPER_AGENT_MODEL`, and skip the Anthropic and Google accounts in step 1.7. Voice and image generation are off in that mode.
 
 ## How work is split
 
@@ -45,6 +45,7 @@ The templates carry the author's defaults. For anyone else, before Phase 1:
 - `TIMEZONE` in `juniper.local.env`.
 - Events: the feeds in `host/workspaces/events/AGENTS.md` and `host/cron/jobs.sh` are Berlin Luma calendars. Find the user's city feeds (Luma city/calendar ICS, Meetup group iCal) and replace them in both files, and the city name.
 - News feeds: in `host/workspaces/news/AGENTS.md` and `host/cron/jobs.sh`.
+- More tools (another chat app, search provider, Home Assistant, any MCP server): follow [docs/integrations.md](docs/integrations.md), one owning agent, everyone else denies it.
 - An agent they don't want: skip its `host.sh agent` and `cron` steps, and remove it from the later phase configs (its `agents.entries` block, its topic in `channels.telegram.groups`, and its name in `tools.agentToAgent.allow`). Keep other agents' `deny` entries for its MCP server; they do no harm.
 - Mail and calendar are iCloud. Another provider needs a different MCP server with the same limits (pinned, `toolFilter`, no delete or send).
 

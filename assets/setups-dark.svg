@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" role="img" aria-labelledby="title" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+<title id="title">Four ways to run Juniper: fully local on one device; fully local on two devices, a Raspberry Pi running OpenClaw and a gaming PC or MacBook running the model; hybrid, with OpenClaw and data on a home server and cloud models, which is what I run; and fully cloud on a VPS with cloud models.</title>
+<defs><marker id="arrow-muted" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#9198a1"/></marker><marker id="arrow-local" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3fb950"/></marker><marker id="arrow-cloud" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4493f8"/></marker></defs>
+<rect width="1200" height="630" rx="16" fill="#0d1117"/>
+<g transform="translate(10,10)">
+<rect width="580" height="280" rx="14" fill="#161b22" stroke="#30363d"/>
+<text x="24" y="38" font-size="20" font-weight="700" fill="#e6edf3" text-anchor="start">Fully local · one device</text>
+<text x="24" y="62" font-size="14" font-weight="400" fill="#9198a1" text-anchor="start">Everything on one computer. Great for trying it.</text>
+<rect x="24" y="86" width="532" height="124" rx="10" fill="#0d1117" stroke="#30363d" stroke-width="1.5"/>
+<text x="40" y="110" font-size="13" font-weight="600" fill="#9198a1" text-anchor="start">Your Mac or gaming PC</text>
+<rect x="44" y="126" width="220" height="64" rx="10" fill="#12261e" stroke="#3fb950" stroke-width="1.5"/>
+<text x="154.0" y="155.0" font-size="14" font-weight="600" fill="#e6edf3" text-anchor="middle">OpenClaw</text>
+<text x="154.0" y="173.0" font-size="12" font-weight="500" fill="#3fb950" text-anchor="middle">agents + your data</text>
+<line x1="264" y1="158" x2="314" y2="158" stroke="#3fb950" stroke-width="1.8" marker-end="url(#arrow-local)"/>
+<rect x="316" y="126" width="220" height="64" rx="10" fill="#12261e" stroke="#3fb950" stroke-width="1.5"/>
+<text x="426.0" y="155.0" font-size="14" font-weight="600" fill="#e6edf3" text-anchor="middle">Local LLM</text>
+<text x="426.0" y="173.0" font-size="12" font-weight="500" fill="#3fb950" text-anchor="middle">Ollama, LM Studio</text>
+<circle cx="29" cy="254" r="5" fill="#3fb950"/>
+<text x="40" y="259" font-size="13" font-weight="500" fill="#9198a1" text-anchor="start">Data: yours</text>
+<circle cx="146" cy="254" r="5" fill="#3fb950"/>
+<text x="157" y="259" font-size="13" font-weight="500" fill="#9198a1" text-anchor="start">Model: local</text>
+<circle cx="270" cy="254" r="5" fill="#d29922"/>
+<text x="281" y="259" font-size="13" font-weight="500" fill="#9198a1" text-anchor="start">Always on: while awake</text>
+</g>
+<g transform="translate(610,10)">
+<rect width="580" height="280" rx="14" fill="#161b22" stroke="#30363d"/>
+<text x="24" y="38" font-size="20" font-weight="700" fill="#e6edf3" text-anchor="start">Fully local · two devices</text>
+<text x="24" y="62" font-size="14" font-weight="400" fill="#9198a1" text-anchor="start">A small always-on box, the big model elsewhere.</text>
+<rect x="24" y="86" width="236" height="124" rx="10" fill="#0d1117" stroke="#30363d" stroke-width="1.5"/>
+<text x="38" y="110" font-size="12" font-weight="600" fill="#9198a1" text-anchor="start">Raspberry Pi or home server</text>
+<rect x="40" y="126" width="204" height="64" rx="10" fill="#12261e" stroke="#3fb950" stroke-width="1.5"/>
+<text x="142.0" y="155.0" font-size="14" font-weight="600" fill="#e6edf3" text-anchor="middle">OpenClaw</text>
+<text x="142.0" y="173.0" font-size="12" font-weight="500" fill="#3fb950" text-anchor="middle">always on</text>
+<line x1="260" y1="158" x2="318" y2="158" stroke="#3fb950" stroke-width="1.8" marker-end="url(#arrow-local)"/>
+<text x="289.0" y="151" font-size="12" font-weight="500" fill="#9198a1" text-anchor="middle">LAN</text>
+<rect x="320" y="86" width="236" height="124" rx="10" fill="#0d1117" stroke="#30363d" stroke-width="1.5"/>
+<text x="334" y="110" font-size="12" font-weight="600" fill="#9198a1" text-anchor="start">Old gaming PC or MacBook</text>
+<rect x="336" y="126" width="204" height="64" rx="10" fill="#12261e" stroke="#3fb950" stroke-width="1.5"/>
+<text x="438.0" y="155.0" font-size="14" font-weight="600" fill="#e6edf3" text-anchor="middle">Local LLM</text>
+<text x="438.0" y="173.0" font-size="12" font-weight="500" fill="#3fb950" text-anchor="middle">GPU does the heavy lifting</text>
+<circle cx="29" cy="254" r="5" fill="#3fb950"/>
+<text x="40" y="259" font-size="13" font-weight="500" fill="#9198a1" text-anchor="start">Data: at home</text>
+<circle cx="160" cy="254" r="5" fill="#3fb950"/>
+<text x="171" y="259" font-size="13" font-weight="500" fill="#9198a1" text-anchor="start">Model: local</text>
+<circle cx="284" cy="254" r="5" fill="#d29922"/>
+<text x="295" y="259" font-size="13" font-weight="500" fill="#9198a1" text-anchor="start">Jobs: pause if the PC sleeps</text>
+</g>
+<g transform="translate(10,310)">
+<rect width="580" height="280" rx="14" fill="#161b22" stroke="#30363d"/>
+<text x="24" y="38" font-size="20" font-weight="700" fill="#e6edf3" text-anchor="start">Hybrid</text>
+<text x="24" y="62" font-size="14" font-weight="400" fill="#9198a1" text-anchor="start">Agents and data at home, models from the cloud.</text>
+<rect x="452" y="20" width="108" height="26" rx="13" fill="#21173a" stroke="#ab7df8"/>
+<text x="506.0" y="38" font-size="13" font-weight="600" fill="#ab7df8" text-anchor="middle">What I run</text>
+<rect x="24" y="86" width="236" height="124" rx="10" fill="#0d1117" stroke="#30363d" stroke-width="1.5"/>
+<text x="38" y="110" font-size="13" font-weight="600" fill="#9198a1" text-anchor="start">Home server</text>
+<rect x="40" y="126" width="204" height="64" rx="10" fill="#12261e" stroke="#3fb950" stroke-width="1.5"/>
+<text x="142.0" y="155.0" font-size="14" font-weight="600" fill="#e6edf3" text-anchor="middle">OpenClaw</text>
+<text x="142.0" y="173.0" font-size="12" font-weight="500" fill="#3fb950" text-anchor="middle">agents + your data</text>
+<line x1="260" y1="140" x2="328" y2="120" stroke="#4493f8" stroke-width="1.8" marker-end="url(#arrow-cloud)"/>
+<rect x="330" y="90" width="226" height="60" rx="10" fill="#121d2f" stroke="#4493f8" stroke-width="1.5"/>
+<text x="443.0" y="117.0" font-size="14" font-weight="600" fill="#e6edf3" text-anchor="middle">Cloud models</text>
+<text x="443.0" y="135.0" font-size="12" font-weight="500" fill="#4493f8" text-anchor="middle">Claude, Gemini (capped)</text>
+<line x1="260" y1="178" x2="328" y2="192" stroke="#3fb950" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#arrow-local)"/>
+<rect x="330" y="164" width="226" height="56" rx="10" fill="#12261e" stroke="#3fb950" stroke-width="1.5" stroke-dasharray="6 5"/>
+<text x="443.0" y="189.0" font-size="14" font-weight="600" fill="#e6edf3" text-anchor="middle">Local LLM</text>
+<text x="443.0" y="207.0" font-size="12" font-weight="500" fill="#3fb950" text-anchor="middle">optional, per agent</text>
+<circle cx="29" cy="254" r="5" fill="#3fb950"/>
+<text x="40" y="259" font-size="13" font-weight="500" fill="#9198a1" text-anchor="start">Data: at home</text>
+<circle cx="160" cy="254" r="5" fill="#4493f8"/>
+<text x="171" y="259" font-size="13" font-weight="500" fill="#9198a1" text-anchor="start">Model: cloud or mixed</text>
+<circle cx="349" cy="254" r="5" fill="#3fb950"/>
+<text x="360" y="259" font-size="13" font-weight="500" fill="#9198a1" text-anchor="start">Always on: yes</text>
+</g>
+<g transform="translate(610,310)">
+<rect width="580" height="280" rx="14" fill="#161b22" stroke="#30363d"/>
+<text x="24" y="38" font-size="20" font-weight="700" fill="#e6edf3" text-anchor="start">Fully cloud</text>
+<text x="24" y="62" font-size="14" font-weight="400" fill="#9198a1" text-anchor="start">No hardware at home. Quickest to run.</text>
+<rect x="24" y="86" width="236" height="124" rx="10" fill="#0d1117" stroke="#30363d" stroke-width="1.5"/>
+<text x="38" y="110" font-size="13" font-weight="600" fill="#9198a1" text-anchor="start">VPS</text>
+<rect x="40" y="126" width="204" height="64" rx="10" fill="#121d2f" stroke="#4493f8" stroke-width="1.5"/>
+<text x="142.0" y="155.0" font-size="14" font-weight="600" fill="#e6edf3" text-anchor="middle">OpenClaw</text>
+<text x="142.0" y="173.0" font-size="12" font-weight="500" fill="#4493f8" text-anchor="middle">agents + your data</text>
+<line x1="260" y1="158" x2="328" y2="158" stroke="#4493f8" stroke-width="1.8" marker-end="url(#arrow-cloud)"/>
+<text x="294.0" y="151" font-size="12" font-weight="500" fill="#9198a1" text-anchor="middle">API calls</text>
+<rect x="330" y="126" width="226" height="64" rx="10" fill="#121d2f" stroke="#4493f8" stroke-width="1.5"/>
+<text x="443.0" y="155.0" font-size="14" font-weight="600" fill="#e6edf3" text-anchor="middle">Cloud models</text>
+<text x="443.0" y="173.0" font-size="12" font-weight="500" fill="#4493f8" text-anchor="middle">Claude, Gemini</text>
+<circle cx="29" cy="254" r="5" fill="#4493f8"/>
+<text x="40" y="259" font-size="13" font-weight="500" fill="#9198a1" text-anchor="start">Data: at a host</text>
+<circle cx="175" cy="254" r="5" fill="#4493f8"/>
+<text x="186" y="259" font-size="13" font-weight="500" fill="#9198a1" text-anchor="start">Model: cloud</text>
+<circle cx="299" cy="254" r="5" fill="#3fb950"/>
+<text x="310" y="259" font-size="13" font-weight="500" fill="#9198a1" text-anchor="start">Always on: yes</text>
+</g>
+<text x="600.0" y="616" font-size="13" font-weight="500" fill="#9198a1" text-anchor="middle">You chat through Telegram in every setup; it carries the messages, nothing needs an open port.</text>
+</svg>

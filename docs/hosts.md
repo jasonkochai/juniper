@@ -14,6 +14,8 @@ Juniper runs in Docker on any 64-bit machine. Pick one of three host types and s
 
 Telegram works the same on all three: the bot polls Telegram, so no host needs an open port.
 
+The host decides where OpenClaw runs; the models can run somewhere else. Combined, that gives four common setups (see the README graphic): fully local on one device, fully local on two devices (a Raspberry Pi plus a gaming PC or MacBook for the model), hybrid (home server plus cloud models) and fully cloud (VPS plus cloud models). [local-llm.md](local-llm.md) covers the model side.
+
 ## Requirements (all hosts)
 
 - **64-bit CPU**, amd64 or arm64. The pinned image `ghcr.io/openclaw/openclaw:2026.10.5` is published for both (checked against the registry on 2026-10-27).

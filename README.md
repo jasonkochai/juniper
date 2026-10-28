@@ -39,8 +39,9 @@ Claude Code downloads the repo, asks you a few questions and builds the system w
 - [How it works](#-how-it-works)
 - [What happens when you run it](#-what-happens-when-you-run-it)
 - [What you need](#-what-you-need)
-- [Where it runs](#-where-it-runs)
+- [Ways to run it](#-ways-to-run-it)
 - [Fully local with your own models](#-fully-local-with-your-own-models)
+- [Connect more tools](#-connect-more-tools)
 - [What it costs](#-what-it-costs)
 - [Security](#-security)
 - [Set it up by hand](#-set-it-up-by-hand)
@@ -56,10 +57,10 @@ I wanted the same kind of assistant, **fully private**. So I built Juniper on [O
 
 - **Same idea.** Agents that work on their own schedule, brief you every morning, sort your inbox, find events and ask before they act.
 - **Your hardware.** It runs on your home server, a Raspberry Pi, a VPS or your own computer. Your data stays on your devices.
-- **Fully local if you want.** Swap the cloud models for your own LLM and no prompt, email or note ever reaches a model provider. I've run it that way myself.
+- **Fully local if you want.** Swap the cloud models for your own LLM and no prompt, email or note ever reaches a model provider. I started fully local; today I run the hybrid setup: everything on my home server, models from the cloud.
 - **You decide what each agent may touch.** Every permission is a line in a config file you can read.
 
-It's also a showcase of what OpenClaw can do: several agents with their own jobs, tools and permissions behind one chat. The big products are easier to start with; Juniper is for when privacy matters more than convenience.
+It's also a showcase of what OpenClaw can do: several agents with their own jobs, tools and permissions behind one chat. My agents and tools are just one example; OpenClaw [connects to much more](#-connect-more-tools). The big products are easier to start with; Juniper is for when privacy matters more than convenience.
 
 ## ✨ What you get
 
@@ -143,24 +144,44 @@ On a **server**, you paste one `sudo` command per step into your own terminal; C
 - [Tailscale](https://tailscale.com) if Juniper runs on a server
 - Obsidian, if you want the notes feature
 
-## 💻 Where it runs
+## 🧭 Ways to run it
 
-Anything 64-bit with Docker and 4 GB of RAM.
+Where OpenClaw runs and where the model runs are two separate choices. Mix them how you like:
 
-| | Host | Best for | Notes |
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/setups-dark.svg">
+  <img src="assets/setups-light.svg" width="100%" alt="Four ways to run Juniper: fully local on one device; fully local on two devices with a Raspberry Pi and a gaming PC or MacBook; hybrid with a home server and cloud models, which is what I run; fully cloud on a VPS.">
+</picture>
+
+| Setup | OpenClaw runs on | The model runs on | Good for |
 | --- | --- | --- | --- |
-| 🏠 | **Home server** (I use a UGREEN one) | always on, data at home | Tailscale forwards automatically on UGOS |
-| 🍓 | **Raspberry Pi 5, mini PC, any Linux box** | a new install: always on, cheap | 64-bit OS; an SSD beats an SD card |
-| ☁️ | **VPS** | no hardware at home | same as any Linux box; your data then sits at a hosting provider |
-| 🧑‍💻 | **Your own computer** (Docker Desktop) | trying it out | agents pause when the computer sleeps |
+| **Fully local · one device** | your Mac or gaming PC (Docker Desktop) | the same machine (Ollama, LM Studio) | trying it, maximum privacy |
+| **Fully local · two devices** | a Raspberry Pi or home server, always on | an old gaming PC or MacBook in your home network | private and always on, without a GPU in the small box |
+| **Hybrid** · what I run | a home server or Raspberry Pi | cloud APIs (Claude, Gemini), optionally a local model for chosen agents | the best answers per euro, data stays at home |
+| **Fully cloud** | a VPS | cloud APIs | no hardware at home |
 
-Full comparison and requirements: [docs/hosts.md](docs/hosts.md).
+I started fully local and now run the hybrid setup on my UGREEN home server. OpenClaw needs anything 64-bit with Docker and 4 GB of RAM; a local model needs a GPU or Apple Silicon. Details: [docs/hosts.md](docs/hosts.md) and [docs/local-llm.md](docs/local-llm.md).
 
 ## 🔐 Fully local with your own models
 
-This is the point of Juniper: always-on agents without a cloud model. I've run it this way myself. Point OpenClaw at a local model server and every agent runs on your own hardware: your prompts, emails and notes never reach a model provider. Telegram still carries the chat itself.
+This is the point of Juniper: always-on agents without a cloud model. That's how I started. Point OpenClaw at a local model server and every agent runs on your own hardware: your prompts, emails and notes never reach a model provider. Telegram still carries the chat itself.
 
-Use a model that handles tool calls well and has a large enough context window; small models are slower and less careful than Haiku. How to set it up: [docs/local-llm.md](docs/local-llm.md).
+Use a model that handles tool calls well and has a large enough context window; small models are slower and less careful than Haiku. Models are set per agent, so a hybrid works too: keep Email on your local model and let News use the cloud. How to set it up: [docs/local-llm.md](docs/local-llm.md).
+
+## 🔌 Connect more tools
+
+Juniper uses Telegram, Apple Mail and Calendar, Brave search and Obsidian because that's what I use. OpenClaw connects to much more:
+
+| | |
+| --- | --- |
+| 💬 **Chat apps** | WhatsApp, Signal, Discord, Slack, iMessage, Matrix, Microsoft Teams, Google Chat, SMS, voice calls |
+| 🧠 **Models** | Anthropic, OpenAI, Google, xAI, Mistral, DeepSeek, Groq, OpenRouter, Bedrock; locally Ollama, LM Studio, llama.cpp, vLLM, Apple on-device |
+| 🔎 **Web search** | Brave, Tavily, Exa, Perplexity, Firecrawl, DuckDuckGo, self-hosted SearXNG |
+| 🎨 **Media** | image and video generation (incl. local ComfyUI), speech from ElevenLabs, Deepgram, Azure |
+| 📱 **Devices** | iOS and Android nodes with camera, location and voice; macOS, Windows and Linux companions |
+| 🧩 **Anything with an MCP server** | Home Assistant, Notion, GitHub, Todoist, your own scripts, or hundreds of SaaS apps through Composio |
+
+Each one goes to a single agent with a narrow tool list, the same way Juniper's mail and calendar do. How: [docs/integrations.md](docs/integrations.md).
 
 ## 💶 What it costs
 
@@ -208,7 +229,7 @@ scripts/
   host.sh                     one command per setup step
   merge_config.py             applies a config without losing OpenClaw's own settings
 docs/
-  hosts.md · setup.md · local-llm.md · security.md · troubleshooting.md
+  hosts.md · setup.md · local-llm.md · integrations.md · security.md · troubleshooting.md
 ```
 
 ## ❓ FAQ
