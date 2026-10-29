@@ -228,6 +228,7 @@ cmd_workspace() {
     local id="${1:-}" src="$HERE/workspaces" dir
     [ -n "$id" ] || die "usage: host.sh workspace <main|agent>"
     [ -f "$src/$id/AGENTS.md" ] || die "no rendered $src/$id/AGENTS.md (missing values?)"
+    [ -f "$src/shared/USER.md" ] || die "no rendered USER.md (fill the profile keys in juniper.local.env)"
     cd "$OC_DIR"
     if [ "$id" = "main" ]; then
         dir="workspace"

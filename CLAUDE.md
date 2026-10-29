@@ -31,7 +31,7 @@ The templates are the author's own setup (Telegram, iCloud Mail and Calendar, Br
 
 Then show the plan back as one short table (host, models, chat app, agents, providers, extras) and get a "yes" before you change anything. Make the changes in their clone, before Phase 1:
 
-- **Profile:** rewrite `host/workspaces/shared/USER.md` with them, and set `TIMEZONE` in `juniper.local.env`.
+- **Profile:** fill `OWNER_NAME`, `OWNER_ROLE`, `CITY`, `LANGUAGES`, `INTERESTS`, `BUSY_TIMES` and `TIMEZONE` in `juniper.local.env`; they render into `USER.md`, which stays skipped until all are set.
 - **Events:** replace the Berlin Luma feeds in `host/workspaces/events/AGENTS.md` and `host/cron/jobs.sh` with feeds for their city (Luma city or calendar ICS, Meetup group iCal), and the city name. **News:** adjust the feeds in `host/workspaces/news/AGENTS.md` and `jobs.sh` to their interests.
 - **An agent they don't want:** skip its `host.sh agent` and `cron` steps, and remove it from the phase configs (its `agents.entries` block, its topic in `channels.telegram.groups`, its name in `tools.agentToAgent.allow`). Other agents' `deny` entries for its MCP server can stay.
 - **Another web search:** change `tools.web.search.provider` in the phase 4 config and install that provider's plugin pinned (`openclaw plugins install npm:@openclaw/<plugin>@<gateway version> --pin`, if it isn't bundled). Put its key in `.env` (the user types it).

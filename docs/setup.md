@@ -8,7 +8,7 @@ Four phases, in order. Each step says who does it:
 
 Below, `host.sh` means whichever of those two forms fits your host, and `$JUNIPER_DIR` is the data folder from `juniper.local.env`. Pick the host first: [hosts.md](hosts.md).
 
-Step numbers follow the original guide; the order below is the one that works (1.9 before 1.6).
+Step numbers stay fixed so troubleshooting.md can refer to them (that's why some are skipped); the order below is the one that works (1.9 before 1.6).
 
 Conventions (tested on a UGREEN DXP4800 Pro with OpenClaw 2026.10.5, and the `local` path end to end in Docker Desktop):
 
@@ -327,12 +327,11 @@ sudo touch "$JUNIPER_DIR/obsidian-assistant/_log.md" && sudo chown 1000:1000 "$J
 touch "/path/to/vault/Assistant/_log.md"                                                                                   # local: your OBSIDIAN_ASSISTANT_DIR
 ```
 
-Verify in the DM: *"Create a note 'Video ideas: agents' with three bullet points"* → confirm → it appears in Obsidian and `_log.md` gets a line. *"Delete that note"* → it can't. *"Read my Journal folder"* → it only has `Assistant/`.
+Verify in the DM: *"Create a note 'Test: agents' with three bullet points"* → confirm → it appears in Obsidian and `_log.md` gets a line. *"Delete that note"* → it can't. *"Read my Journal folder"* → it only has `Assistant/`.
 
 ### 4.8–4.10 Model test week, cost settings, audit
 
-Run the same real tasks on 2–3 models (`/model …`, `/usage cost`) and keep the best quality per cent. Stay under 100k prompt tokens on Haiku (above that every price is 5×). Then `host.sh check` and the full [security checklist](security.md).
-
+Run the same real tasks on 2–3 models (`/model …`, `/usage cost`) and keep the model with the best quality for the money. Stay under 100k prompt tokens on Haiku (above that every price is 5×). Then `host.sh check` and the full [security checklist](security.md).
 
 ## Weekly (5 minutes)
 

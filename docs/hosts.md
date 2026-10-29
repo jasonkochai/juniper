@@ -5,7 +5,7 @@ Juniper runs in Docker on any 64-bit machine. Pick one of three host types and s
 | | `ugos` | `linux` | `local` |
 | --- | --- | --- | --- |
 | What | UGREEN home server with UGOS | any always-on Linux box: Raspberry Pi, mini PC, other home server, VPS | this computer, with Docker Desktop |
-| Good for | the setup this repo was built and tested on | the default for a new install | trying Juniper out |
+| Good for | the setup this repo was built and tested on | most new installs (not yet tested on real hardware) | trying Juniper out |
 | Always on | yes | yes | only while the computer is awake |
 | Reached from your phone | Tailscale (UGOS forwards automatically) | Tailscale (`host.sh expose`) | no, only Telegram |
 | `sudo` | yes, you run each host step | yes, you run each host step | no: Claude Code can run every step itself |
@@ -44,7 +44,7 @@ The host decides where OpenClaw runs; the models can run somewhere else. Combine
 - Set `HOST_SSH=` (empty), `JUNIPER_DIR=~/juniper-data`, `CONTROL_UI_ORIGIN=http://localhost:18789`. Run `host.sh` without `sudo`; it refuses to run as root in this mode.
 - **Notes:** skip Syncthing. Set `OBSIDIAN_ASSISTANT_DIR=/path/to/your/vault/Assistant` in `.env`, and only that folder is mounted.
 - **Trade-offs, in plain words:**
-  - The agents stop when the computer sleeps, and scheduled jobs (morning overview, inbox summaries) are skipped.
+  - The agents stop when the computer sleeps, and scheduled jobs (calendar overview, inbox summary) are skipped.
   - The agents run on the machine you use every day. Docker Desktop's VM is the security boundary instead of a separate device.
   - Instruction files are protected by read-only file mounts, like on a server, but are owned by you rather than root.
 - **Moving to a server later:** stop the gateway and run `host.sh backup`. Change `HOST_TYPE` and `JUNIPER_DIR`, render and copy the bundle, then on the server run `host.sh layout` and `sudo tar xzf <archive> -C "$JUNIPER_DIR" --strip-components=1`. The archive keeps your computer's user ID, so run `sudo chown -R 1000:1000 "$JUNIPER_DIR"/config "$JUNIPER_DIR"/workspace* "$JUNIPER_DIR"/auth-secrets "$JUNIPER_DIR"/imap-mcp`, then `host.sh workspace` for main and each agent, and `host.sh compose`.

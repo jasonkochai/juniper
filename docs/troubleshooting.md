@@ -5,7 +5,7 @@ Errors and fixes from the real install (UGREEN home server, OpenClaw 2026.10.5) 
 ## 1.1 Inspect and back up the current container
 
 * `permission denied … docker.sock`: put `sudo` in front of that docker command. Don't add yourself to the `docker` group, because that is root-equivalent.
-* `python3: not found`: drop the pipe; the raw JSON is fine.
+* `python3: not found`: host.sh needs python3 on the host ([hosts.md](hosts.md), Requirements).
 
 ## 1.2 Create the folder layout and permissions
 
@@ -73,7 +73,7 @@ If `sessions_send` is "not available", the caller's tool policy blocks it. The `
 
 ## 2.5 Morning calendar overview (cron) and reminders via Apple Calendar
 
-Jobs that never fire: the CLI needs a running gateway, and scheduled runs need `cron.enabled`. Check that it is on in the cron docs. Natural-language schedules like "every morning" aren't supported, so use cron syntax.
+Jobs that never fire: the CLI needs a running gateway, and scheduled runs need `cron.enabled`. Check that `cron.enabled` isn't set to false in `openclaw.json`. Natural-language schedules like "every morning" aren't supported, so use cron syntax.
 
 ## 2.6 Events agent
 
@@ -86,9 +86,9 @@ Jobs that never fire: the CLI needs a running gateway, and scheduled runs need `
 * **"has IMAP credentials marked as environment-managed, but this variable was not set".** `ICLOUD_MAIL_APP_PASSWORD` is missing from `.env`, or the gateway wasn't restarted with `up -d`.
 * **The test connection fails with an authentication error.** A wrong address (use the `@icloud.com` address from the iPhone's Mail settings) or a wrong or revoked mail app password.
 
-## 3.3 Email summaries
+## 3.3 Email summary
 
-The fixed windows and the cap of 30 mails keep input small. A full inbox dump can go over Haiku's 100k-token threshold, and above it everything costs 5×.
+The 24-hour window and the cap of 30 mails keep input small. A full inbox dump can go over Haiku's 100k-token threshold, and above it everything costs 5×.
 
 ## 4.1 News agent
 
