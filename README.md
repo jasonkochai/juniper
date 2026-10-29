@@ -13,7 +13,7 @@ Built on OpenClaw. Nothing happens without your "yes".
 
 **What I learned:** Docker and container hardening · Linux users and permissions · network security and least privilege · multi-agent system design · LLM tool permissions and prompt-injection defence · MCP integrations · local LLMs · secrets management · LLM cost and token optimisation
 
-**Result:** token-efficient by design. The same agents cost about **$3 a month** in model fees instead of about **$120** with every agent on Claude Sonnet and no prompt caching: **roughly 97% less** ([how](#-what-it-costs)).
+**Result:** token-efficient by design. By my estimate, the same agents cost about **$3 a month** in model fees instead of about **$120** with every agent on Claude Sonnet and no prompt caching: **roughly 97% less** ([how it's estimated](#-what-it-costs)).
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/juniper-dark.svg">
@@ -71,7 +71,7 @@ The same whatever tools you pick:
 
 - **One container, many agents.** OpenClaw runs in Docker on a machine you control. Each agent has one job and its own instructions, memory, model and tool list.
 - **One chat, only you.** All agents sit behind one chat app, each in its own topic or channel where the app has them. The bot answers only your account, and every reply starts with the agent's emoji.
-- **Narrow connectors.** Mail, calendar and extras connect through pinned MCP servers or plugins, filtered so only the tools an agent needs exist. Each tool belongs to one agent; the others are denied it.
+- **Narrow connectors.** Mail, calendar and extras connect through pinned MCP servers or plugins, filtered so only the tools an agent needs exist. Each connector belongs to one agent; the others are denied it.
 - **On a schedule.** Agents run their own jobs (morning overview, inbox summary) and post the result in their topic.
 - **Models per agent.** Cloud, local or mixed. My default: Claude Haiku where judgement matters, Gemini Flash-Lite (free tier) for bulk reading, each falling back to the other.
 - **Rules live in this repo.** Agents can't change their own instructions. Details: [Security](#-security).
@@ -89,7 +89,7 @@ Where OpenClaw runs and where the model runs are two separate choices. Mix them 
 | --- | --- | --- | --- |
 | **Fully local · one device** | your Mac or gaming PC (Docker Desktop) | the same machine (Ollama, LM Studio) | trying it, maximum privacy |
 | **Fully local · two devices** | a Raspberry Pi or home server, always on | an old gaming PC or MacBook in your home network | private and always on, without a GPU in the small box |
-| **Hybrid** · what I run | a home server or Raspberry Pi | cloud APIs (Claude, Gemini), optionally a local model for chosen agents | the best answers per euro, data stored at home |
+| **Hybrid** · what I run | a home server or Raspberry Pi | cloud APIs (Claude, Gemini), optionally a local model for chosen agents | the best answers for the money, data stored at home |
 | **Fully cloud** | a VPS | cloud APIs | no hardware at home |
 
 I started fully local and now run the hybrid setup on my UGREEN home server. OpenClaw needs anything 64-bit with Docker and 4 GB of RAM; a local model needs a GPU or Apple Silicon. Details: [docs/hosts.md](docs/hosts.md).
@@ -131,7 +131,24 @@ With my default models and search; other providers cost what they charge.
 - **Small, fresh runs.** Scheduled jobs start with an empty session, the calendar overview loads a slim context, and the always-on heartbeat is off.
 - **Capped inputs.** At most 30 mails per summary, 10,000 characters per web page and 12 fetches per news run, which also keeps Haiku under its 100K-token price jump.
 
-The comparison is an estimate from my workload model (runs per day and tokens per run for each agent, 4 model calls per run, half the input cached): about $2.70 a month for Juniper's setup, about $118 for the same work on Sonnet without caching. Fully local costs electricity instead of API fees. The hardware is whatever you already have, a Raspberry Pi, or a small VPS. Outside the EEA, Google may use free-tier prompts to improve its products; enable billing, or keep sensitive agents on Haiku or a local model.
+The comparison is an estimate from my workload model: about $2.70 a month for Juniper's setup, about $118 for the same work on Sonnet without caching.
+
+<details>
+<summary>The workload behind the estimate</summary>
+
+| Agent | Model | Runs a day | Input tokens per call | Output tokens per call |
+| --- | --- | --- | --- | --- |
+| Juniper (main) | Haiku | 15 | 12,000 | 600 |
+| Calendar | Haiku | 4 | 7,000 | 250 |
+| Events | Flash-Lite (free tier) | 3 | 25,000 | 900 |
+| Email | Haiku | 4 | 18,000 | 1,000 |
+| News | Flash-Lite (free tier) | 1 | 45,000 | 2,000 |
+
+Each run makes 4 model calls, and half the input is read from the cache. Prices per million tokens: Haiku $0.10 in, $0.50 out, $0.01 cached; Sonnet $2, $10, $0.10. The Sonnet comparison runs every agent on Sonnet with no caching. Images, voice and search aren't included.
+
+</details>
+
+Fully local costs electricity instead of API fees. The hardware is whatever you already have, a Raspberry Pi, or a small VPS. Outside the EEA, Google may use free-tier prompts to improve its products; enable billing, or keep sensitive agents on Haiku or a local model.
 
 ## 🏠 My setup
 
@@ -162,7 +179,7 @@ One Telegram bot, one private group, one topic per agent. I talk to the main ass
 
 ## 🧰 What you need
 
-- [Claude Code](https://claude.com/claude-code), and Python 3 on your computer
+- [Claude Code](https://claude.com/claude-code), and Python 3.9 or newer on your computer
 - A machine to run it on: anything 64-bit with Docker and 4 GB of RAM, or your own computer to try it ([Ways to run it](#-ways-to-run-it))
 - Model access: cloud API keys (by default an [Anthropic](https://platform.claude.com) account with prepaid credit and a [Google AI Studio](https://aistudio.google.com/apikey) key), **or** a local model server
 - [Tailscale](https://tailscale.com) if Juniper runs on a server
@@ -218,9 +235,9 @@ Juniper can read your mail, calendar and notes, so it's built to fail safe. Thes
 
 - **Nothing happens without your "yes".** Sending, booking, buying, deleting: always asked first, and most of those tools don't even exist.
 - **Locked container.** Runs as a normal user, all extra privileges dropped, memory limited, no access to Docker itself, only its own data folder and your notes folder visible.
-- **Not on the internet.** The dashboard listens on the machine itself and is reachable only through your private Tailscale network. With Telegram, no port is open at all.
+- **Not on the internet.** The dashboard listens on the machine itself and is reachable only through your private Tailscale network. With Telegram, no port has to be opened to the internet.
 - **No commands, ever.** Shell access and OpenClaw's "Code Mode" are off for every agent.
-- **Split permissions.** Agents that read untrusted text (emails, web pages, event feeds) can only post in their own topic. In my setup, Events can hand an event to Calendar only after you reply "registered N".
+- **Split permissions.** Agents that read untrusted text (emails, web pages, event feeds) can only post in their own topic. The one exception in my setup: Events can pass an event to Calendar. It's told to do that only after you reply "registered N", and Calendar only writes to its own Agent calendar.
 - **Secrets stay put.** Keys live in one file on the host. Claude Code never reads it.
 - **Rules can't be rewritten by an agent.** Every agent's rule files (`AGENTS.md`, `SOUL.md`, `USER.md`) are mounted read-only into the container (tested: editing, deleting and replacing them all fail), and the agents are told to refuse rule changes sent as messages. You change them in this repo.
 - **Panic button.** Stop everything from your phone in under a minute: [docs/security.md](docs/security.md#panic-button).

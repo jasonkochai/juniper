@@ -4,7 +4,7 @@ import json
 import sys
 from typing import Any
 
-# Blocks OpenClaw writes itself; the live copy wins (guide step 1.6).
+# Blocks OpenClaw writes itself; the live copy wins (docs/setup.md, step 1.6).
 OPENCLAW_OWNED = ("plugins", "skills", "meta", "wizard", "talk")
 
 

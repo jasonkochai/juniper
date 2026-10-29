@@ -16,7 +16,7 @@
    * [Anthropic Console → API keys](https://platform.claude.com/settings/keys) → disable
    * [AI Studio → API keys](https://aistudio.google.com/apikey) → delete
    * Brave dashboard → revoke
-   * X / xAI, if added.
+   * Any other provider key you added (OpenAI, xAI …).
 6. **Rotate the gateway token.**
 
    ```
@@ -48,7 +48,7 @@
 * Telegram: `dmPolicy: "allowlist"`, `allowFrom` holds only your numeric ID, `groupPolicy: "allowlist"`, only your group is listed, and the invite link is revoked.
 * Exec is denied for **every** agent: `tools.deny` includes `exec` and `group:runtime`, and `tools.exec.mode: "deny"`. **`tools.codeMode: false`**, because Code Mode's own exec bypasses those denies. No agent lists `exec`/`wait`, and the hostname test is refused. Never `/exec security=full` or `mode: "full"`.
 * `tools.elevated.enabled: false`
-* No ClawHub skills are installed. The only integrations are two **version-pinned** MCP servers (`caldav-mcp@0.10.0`, `imap-mcp-server@2.2.0`). Any new skill or server goes through the vetting list below.
+* No ClawHub skills are installed. The only integrations are two **version-pinned** MCP servers (`caldav-mcp@0.10.0`, `imap-mcp-server@2.2.0`) and, in Phase 4, the Brave plugin pinned to the gateway version. Any new skill or server goes through the vetting list below.
 * Every `AGENTS.md` says "never install skills". Every agent's `AGENTS.md`, `SOUL.md` and `USER.md` are root-owned (`chmod 444` on a local install) and mounted read-only into the container, so the agents' file tools can't edit, delete or replace them.
 * Separate app-specific passwords `openclaw-mail` and `openclaw-cal`, kept only in `.env`. Your main Apple Account password is never used anywhere on the host.
 * The mail server has `IMAP_MCP_READ_ONLY=true`, `toolFilter` passes only the 3 read tools, and no SMTP account is configured. Tested: delete and send requests fail.

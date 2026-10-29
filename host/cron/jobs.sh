@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Add the scheduled jobs for one agent: host.sh cron <agent>
 # Every --message is complete on its own: --light-context runs do not
-# load the full AGENTS.md (guide step 2.5).
+# load the full AGENTS.md (docs/setup.md, Phase 2).
 set -euo pipefail
 
 oc() { docker exec openclaw-gateway node dist/index.js "$@"; }
@@ -20,7 +20,7 @@ add_job() {
 calendar() {
     add_job "calendar-overview" cron add --name "calendar-overview" --agent calendar \
       --cron "25 7 * * *" --tz "{{TIMEZONE}}" --session isolated --light-context \
-      --message "List today's and tomorrow morning's events from all calendars. Skip the calendar home (URL ends in /calendars/), inbox, outbox, notification and reminder lists; they are not calendars, don't report errors for them. Format: time – title – place. Flag conflicts and travel gaps under 30 min. Max 12 lines." \
+      --message "List today's and tomorrow morning's events from all calendars. Skip the calendar home (URL ends in /calendars/), inbox, outbox, notification and reminder lists; they are not calendars, don't report errors for them. Format: time – title – place. Flag conflicts and travel gaps under 30 min. Max 12 lines. Start the reply with 📅 and a space." \
       --announce --channel telegram --to "{{TELEGRAM_GROUP_ID}}:topic:{{CAL_TOPIC_ID}}"
 }
 
