@@ -1,5 +1,8 @@
 <div align="center">
 
+<a href="assets/juniper-video.mp4"><img src="assets/juniper-video.gif" width="100%" alt="22-second intro to Juniper: always-on AI agents in one chat on a machine you control, a morning of agent messages, an event added only after a yes, and about $3 a month in model fees instead of about $120 by my estimate. Chat messages are illustrative."></a>
+<sub>▶ Click for the full video with sound. Chat messages are illustrative.</sub>
+
 # ⚡ Juniper
 
 **A private, self-hosted alternative to Claude Duet, OpenAI's dots and xAI's Grok Bot.**<br>
