@@ -1,6 +1,6 @@
 <div align="center">
 
-<a href="assets/juniper-video.mp4"><img src="assets/juniper-video.gif" width="100%" alt="22-second intro to Juniper: always-on AI agents in one chat on a machine you control, a morning of agent messages, an event added only after a yes, and about $3 a month in model fees instead of about $120 by my estimate. Chat messages are illustrative."></a>
+<a href="https://cdn.jsdelivr.net/gh/jasonkochai/juniper@b8fdae5562a9fc33f20490d54ebdeba16be00624/assets/juniper-video.mp4"><img src="assets/juniper-video.gif" width="100%" alt="22-second intro to Juniper: always-on AI agents in one chat on a machine you control, a morning of agent messages, an event added only after a yes, and about $3 a month in model fees instead of about $120 by my estimate. Chat messages are illustrative."></a>
 <sub>▶ Click for the full video with sound. Chat messages are illustrative.</sub>
 
 # ⚡ Juniper
